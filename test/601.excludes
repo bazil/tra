@@ -12,7 +12,7 @@ ignore a ''
 sync -v a b
 isfile b/dir/foo.8 'goodbye world'
 
-x test correct bookkeeping in presence of client-sideexcludes
+x test correct bookkeeping in presence of client-side excludes
 replica a b
 mkdir a/dir
 create a/dir/hello 'hello world'
@@ -20,7 +20,7 @@ sync a b
 isfile b/dir/hello 'hello world'
 ignore b 'exclude *.8'
 create a/dir/foo.8 'goodbye world'
-sync -Cv a b
+sync -v a b
 isnot b/dir/foo.8
 ignore b ''
 sync -v a b

@@ -12,14 +12,14 @@ change a/foo 'a'
 change d/foo 'd'
 sync -C b c
 # suppose we resolve by choosing c's copy
-sync -t b c foo
+sync -b b c foo
 sync c b
 isfile b/foo 'cd'
 # then there should be a conflict at ab
 sync -C a b
 isfile b/foo 'cd'
 # resolve it
-sync -t a b foo
+sync -b a b foo
 # propagate to a
 sync b a
 isfile a/foo 'cd'

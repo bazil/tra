@@ -12,7 +12,7 @@ change a/foo 'a'
 change d/foo 'd'
 sync -C b c
 # suppose we resolve by choosing b's copy
-sync -f b c foo
+sync -a b c foo
 sync c b
 isfile b/foo 'ab'
 isfile c/foo 'ab'
