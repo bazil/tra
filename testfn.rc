@@ -6,13 +6,13 @@ nl='
 '
 
 if(~ $#TRASRV 0)
-	TRASRV=(python srv.py)
+	TRASRV=(8.trasrv)
 if(~ $#SYNC 0)
-	SYNC=(python textui.py -T)
+	SYNC=(8.textui)
 if(~ $#TRADUMP 0)
-	TRADUMP=(python dumpdb.py)
+	TRADUMP=(8.tradump)
 if(~ $#TRAMKDB 0)
-	TRAMKDB=(python tramkdb)
+	TRAMKDB=(8.tramkdb)
 
 tmp=/tmp/tratest
 
@@ -64,7 +64,7 @@ fn sync {
 		fn mkdir
 		echo sync... >[1=2]
 		$SYNC $flags $tmp/$1.s $tmp/$2.s $3 || die sync $1 $2 $3
-	}
+	} || die sync $1 $2 $3
 }
 
 fn change {
@@ -158,6 +158,5 @@ fn run {
 
 if(~ $#* 0)
 	prompt=('TRATEST: ' '	') exec rc -i
-for(i)
-	run $i
+run $*
 
