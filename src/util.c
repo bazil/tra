@@ -6,7 +6,7 @@ char*	dbgname;
 void
 traversion(void)
 {
-	print("Tra Working Version SOSP03\n");
+	print("Tra Working Version OSDI04\n");
 	exits(nil, 0);
 }
 
@@ -220,36 +220,6 @@ panic(char *f, ...)
 	va_end(arg);
 	fmtfdflush(&fmt);
 	abort();
-}
-
-static int tlogfd = -2;
-static ulong tlogid;
-
-void
-tlog(char *f, ...)
-{
-	char now[32];
-	va_list arg;
-	Fmt fmt;
-	char buf[256];
-
-	while(tlogid == 0)
-		tlogid = fastrand();
-
-	if(tlogfd == -2)
-		tlogfd = open(trapath("minisync.log"), OWRITE);
-	if(tlogfd == -1)
-		return;
-
-	seek(tlogfd, 0, 2);
-	fmtfdinit(&fmt, tlogfd, buf, sizeof buf);
-	va_start(arg, f);
-	strcpy(now, sysctime(time(0)));
-	now[strlen(now)-1] = '\0';
-	fmtprint(&fmt, "%s %lux ", now, tlogid);
-	fmtvprint(&fmt, f, arg);
-	va_end(arg);
-	fmtfdflush(&fmt);
 }
 
 vlong

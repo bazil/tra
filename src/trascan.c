@@ -5,7 +5,7 @@ Replica *repl;
 void
 usage(void)
 {
-	fprint(2, "usage: scan replica [path...]\n");
+	fprint(2, "usage: trascan replica [path...]\n");
 	exits("usage", 1);
 }
 

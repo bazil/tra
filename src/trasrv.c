@@ -824,7 +824,7 @@ srvmeta(Srv *srv, char *k)
 void
 usage(void)
 {
-	fprint(2, "usage: trasrv [-i inc/exc] [-o opt]... dbfile root\n");
+	fprint(2, "usage: trasrv [-i inc/exc] [-o opt] ... dbfile root\n");
 	exits("usage", 1);
 }
 

@@ -618,7 +618,6 @@ void		sysstatnotedelete(Stat*);
 int		syswrite(Fid*, void*, int);
 int		syswstat(char*, Stat*, Stat*);
 void		tclose(Fd*);
-void		tlog(char*, ...);
 Fd*		topen(int);
 int		tramkwriteable(Fid*, char*);
 char*		trapath(char*);
