@@ -1,0 +1,6 @@
+x simple create propagate 
+replica -z5 a b
+create a/hello 'hello world'
+sync -z5 a b
+isfile b/hello 'hello world'
+
