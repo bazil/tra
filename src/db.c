@@ -797,10 +797,12 @@ logit(Db *db, Buf *b)
 {
 	int n;
 
+/*
 	if(db->ignwr){
 		free(b);
 		return;
 	}
+*/
 
 	n = b->ep - b->p;
 	if(db->logbuf->ep - db->logbuf->p < n)
@@ -1519,7 +1521,7 @@ dumpdb(Db *db, int fd)
 int
 dbignorewrites(Db *db)
 {
-	db->ignwr = 1;
-	dstoreignorewrites(db->s);
+//	db->ignwr = 1;
+//	dstoreignorewrites(db->s);
 	return 0;
 }
