@@ -8,17 +8,7 @@
 ulong
 fastrand(void)
 {
-	ulong seed;
-	struct timeval tv;
-	static int first = 1;
-
-	if(first){
-		gettimeofday(&tv, nil);
-		seed = tv.tv_sec ^ tv.tv_usec ^ (getpid()<<8);
-		srandom(seed);
-		first = 0;
-	}
-	return (random()&0xFFFF)|(random()<<16);
+	return arc4random();
 }
 
 char*
@@ -88,7 +78,7 @@ syscreateexcl(char *name)
 {
 	int fd;
 
-	fd = open(name, O_RDWR|O_CREAT|O_EXCL/*|O_EXLOCK*/, 0666);
+	fd = open(name, O_RDWR|O_CREAT|O_EXCL/*|O_EXLOCK*/, 0600);
 	if(fd < 0)
 		return -1;
 	return fd;
@@ -141,7 +131,6 @@ mode2modeflags(ulong tra, ulong *m, ulong *f)
 
 	/* BUG: should detect the chattr attributes */
 }
-
 
 ulong
 stat2mode(char *tpath, struct stat *st)

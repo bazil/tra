@@ -6,7 +6,6 @@ OFILES=\
 	banner.$O\
 	clist.$O\
 	clnt.$O\
-	ctime.$O\
 	dat.$O\
 	db.$O\
 	fdbuf.$O\
@@ -39,8 +38,27 @@ LIB=libtra.a
 
 SHORTLIB=thread bio 9
 
+TARG=\
+	tra\
+	trafixdb\
+	tramkdb\
+	trasrv\
+	trascan\
+	tradump\
+	trafixdb\
+
+PROGS=${TARG:%=$O.%}
+
+all:V: $PROGS
+
+nuke:V: nuke-common 
+	(cd libzlib ; mk nuke)
+
 $O.%: %.$O $LIB libzlib/libzlib.a ${SHORTLIB:%=$LIBDIR/lib%.a}
 	$LD $LDFLAGS -o $target $prereq
+
+libzlib/libzlib.a:
+	( cd libzlib ; mk )
 
 $O.tradump $O.trafixdb: noclist.$O
 
