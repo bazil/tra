@@ -1,10 +1,10 @@
 x real update/update conflict
 replica a b
 create a/foo 'hello world'
-sync -D a b
+sync a b
 change a/foo 'howdy world'
 change b/foo 'goodbye world'
-sync -CD a b
+sync a b
 isfile a/foo 'howdy world'
 isfile b/foo 'goodbye world'
 # isfile b/foo.TRA 'hello world'
