@@ -64,31 +64,67 @@ freefid(Fid *f)
 	free(f);
 }
 
+enum {
+/*
+	out16 = 1;
+	for(i=0; i<16; i++)
+		out16 = (out16 * 256) % 4093;
+	out16 = 4093 - out16;
+*/
+
+	Out16 = 2998
+};
+/*
+ * Define to force checking ``fast'' hash function against correct one.
+ */
+/* #define CHECK 1 */
 static uint
 splitblock(uchar *dat, uint n)
 {
-	int i, out16;
-	uchar *bp, *ep, *p;
+	int i;
+	uchar *bp, *ep, *p, *q;
 	ulong v;
+#ifdef CHECK
+	uchar *goodp;
+#endif
 
 	ep = dat+n;
 	bp = dat+2048;	/* minimum block size */
 	if(bp >= ep)
 		return n;
 
+/*
+	Old, slower version, for reference.
+	When copying large trees, this is one
+	of the bottlenecks (the other is _sha1block),
+ */
+#ifdef CHECK
 	v = 0;
-	out16 = 1;
-	for(i=0; i<16; i++)
-		out16 = (out16 * 256) % 4093;
-	out16 = 4093 - out16;
-
 	for(p=dat; p<ep; p++){
-		if(v==3453 && p>=bp)	/* 3453: random */
+		if(v==3453 && p>=bp)	// 3453: random
 			break;
-		v = (v*256+*p) % 4093;	/* 4093: closest prime to 4096 (Blocksize/2) */
+		v = (v*256+*p) % 4093;	// 4093: closest prime to 4096 (Blocksize/2) 
 		if(p-dat >= 16)
-			v = (v + p[-16]*out16) % 4093;
+			v = (v + p[-16]*Out16) % 4093;
 	}
+	goodp = p;
+#endif
+
+/*
+	New faster version
+*/
+	v = 0;
+	for(p=bp-16; p<bp; p++)
+		v = (v*256+*p) % 4093;
+	for(q=p-16; p<ep; p++, q++){
+		if(v == 3453)
+			break;
+		v = (v*256 + *p + *q*Out16) % 4093;
+	}
+
+#ifdef CHECK
+	assert(p == goodp);
+#endif
 	return p - dat;
 }
 
@@ -235,13 +271,16 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 	}
 	s->synctime = maxvtime(s->synctime, srv->now);
 
-	nks = syskids(tpath, &ks, ss);
-	for(i=0; i<nks; i++){
-		kp = mkpath(p, ks[i]->name);
-		statupdate(srv, kp, nil, s->mtime, ks[i]);
-		freepath(kp);
+	if(s->state == SDir){
+//fprint(2, "syskids dir %s\n", tpath);
+		nks = syskids(tpath, &ks, ss);
+		for(i=0; i<nks; i++){
+			kp = mkpath(p, ks[i]->name);
+			statupdate(srv, kp, nil, s->mtime, ks[i]);
+			freepath(kp);
+		}
+		freesysstatlist(ks, nks);
 	}
-	freesysstatlist(ks, nks);
 
 	k = nil;
 	nk = dbgetkids(srv->db, ap->e, ap->n, &k);
@@ -305,6 +344,7 @@ srvmkdir(Srv *srv, Path *p, Stat *t)
 
 	tpath = translate(srv, p);
 	if(sysmkdir(tpath, t) < 0){
+		free(tpath);
 		fprint(2, "trasrv: sysmkdir: %r\n");
 		return -1;
 	}
@@ -325,6 +365,7 @@ srvmkdir(Srv *srv, Path *p, Stat *t)
 	dbputstat(srv->db, ap->e, ap->n, s);
 	freestat(s);
 	free(ap);
+	free(tpath);
 	return 0;
 }
 
@@ -412,6 +453,7 @@ srvclose(Srv *srv, int fidnum)
 	n = sysclose(fid);
 	free(fid->ap);
 	free(fid->tpath);
+	free(fid->hashlist);
 	freefid(fid);
 	return n;
 }
@@ -479,6 +521,7 @@ srvcommit(Srv *srv, int fidnum, Stat *t)
 	dbputstat(srv->db, fid->ap->e, fid->ap->n, s);
 	free(fid->ap);
 	free(fid->tpath);
+	free(fid->hashlist);
 	freestat(s);
 	freefid(fid);
 	return n;
@@ -533,20 +576,21 @@ srvremove(Srv *srv, Path *p, Stat *t)
 static Hashlist*
 hashfile(Srv *srv, Fid *xfid, char *tpath)
 {
-	uchar *buf, dig[SHA1dlen];
+	uchar *buf, *fbuf, dig[SHA1dlen];
 	vlong off;
 	int n, nbuf;
 	Hashlist *hl;
 	Fid *fid;
 
 	USED(srv);
-	buf = emalloc(IOCHUNK);
+	buf = emallocnz(IOCHUNK);
+	fbuf = buf;
 
 	fid = fidalloc(1);
 	fid->tpath = tpath;
 	if(sysopen(fid, fid->tpath, 'r') < 0){
 		freefid(fid);
-		free(buf);
+		free(fbuf);
 		return nil;
 	}
 
@@ -559,16 +603,19 @@ hashfile(Srv *srv, Fid *xfid, char *tpath)
 			sha1(buf, n, dig, nil);
 			hl = addhash(hl, dig, off, n);
 			if(n < nbuf)
-				memmove(buf, buf+n, nbuf-n);
+				buf += n;
 			nbuf -= n;
 			off += n;
 		}
+		if(nbuf && buf != fbuf)
+			memmove(fbuf, buf, nbuf);
+		buf = fbuf;
 	}
 	if(n < 0){
 		sysclose(fid);
 		freefid(fid);
 		free(hl);
-		free(buf);
+		free(fbuf);
 		return nil;
 	}
 	while(nbuf){
@@ -576,12 +623,12 @@ hashfile(Srv *srv, Fid *xfid, char *tpath)
 		sha1(buf, n, dig, nil);
 		hl = addhash(hl, dig, off, n);
 		if(n < nbuf)
-			memmove(buf, buf+n, nbuf-n);
+			buf += n;
 		nbuf -= n;
 		off += n;
 	}
 	xfid->rfid = fid;
-	free(buf);
+	free(fbuf);
 	return hl;
 }
 
@@ -636,7 +683,7 @@ hashcopy(Fid *fid, Hash *h)
 
 	if(sysseek(fid->rfid, h->off) < 0)
 		return -1;
-	buf = emalloc(IOCHUNK);
+	buf = emallocnz(IOCHUNK);
 	n = h->n;
 	tot = 0;
 	while(tot < n){
@@ -909,12 +956,12 @@ fprint(2, "HELLO FROM TRASRV\n");
 		case Tread:
 			if(t.n >= 128*1024)
 				sysfatal("bad count in Tread");
-			r.a = emalloc(t.n);
+			r.a = emallocnz(t.n);
 			if((r.n = srvread(srv, t.fd, r.a, t.n)) < 0)
 				goto Error;
 			break;
 		case Treadhash:
-			r.a = emalloc(t.n);
+			r.a = emallocnz(t.n);
 			if((r.n = srvreadhash(srv, t.fd, r.a, t.n)) < 0)
 				goto Error;
 			break;
@@ -983,6 +1030,19 @@ fprint(2, "HELLO FROM TRASRV\n");
 	}
 
 	srvhangup(srv);
+
+{
+extern int dcs, dcentrycmps, dclistlookups, dclistadd1s, dclistinserts;
+extern int dclookupavls, dcinsertavls, dcdeleteavls, lookupavls;
+extern int cmaplookups, cmapinserts, dbwalks, dbwalklooks;
+extern int strtoids, idtostrs;
+fprint(2, "dc tot %d entrycmp %d listlookup %d listadd1 %d listinsert %d\n",
+	dcs, dcentrycmps, dclistlookups, dclistadd1s, dclistinserts);
+fprint(2, "\tavl lookup %d lookupcmp %d insertcmp %d deletecmp %d\n",
+		lookupavls, dclookupavls, dcinsertavls, dcdeleteavls);
+fprint(2, "\tcmaplookup %d cmapinsert %d dbwalks %d dbwalklooks %d\n", cmaplookups, cmapinserts, dbwalks, dbwalklooks);
+fprint(2, "\tstrtoids %d idtostrs %d\n", strtoids, idtostrs);
+}
 	exits(nil, 0);
 }
 

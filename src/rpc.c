@@ -320,7 +320,11 @@ mkbuf(void *data, int ndata)
 {
 	Buf *b;
 
-	b = emalloc(sizeof(Buf)+ndata);
+	if(data)
+		b = emallocnz(sizeof(Buf)+ndata);
+	else
+		b = emalloc(sizeof(Buf)+ndata);
+
 	b->p = (uchar*)(b+1);
 	b->ep = b->p+ndata;
 	if(data)
@@ -371,7 +375,7 @@ readbufdatum(Buf *b)
 	memset(&d, 0, sizeof d);
 	d.n = readbufl(b);
 	if(d.n){
-		d.a = emalloc(d.n);
+		d.a = emallocnz(d.n);
 		memmove(d.a, readbufbytes(b, d.n), d.n);
 	}
 	return d;

@@ -4,12 +4,14 @@
 
 #include "tra.h"
 
+int printstats;
 int res;
 int interactive;
 int verbose;
 int nop;
 int nconflict;
 int expectconflicts;
+int superquiet;
 
 void resolvethread(void*);
 void dumpsyncpath(Syncpath*);
@@ -64,7 +66,15 @@ threadmain(int argc, char **argv)
 	case 'n':
 		nop = 1;
 		break;
+	case 'q':
+		superquiet = 1;
+		verbose = 0;
+		break;
+	case 's':
+		printstats = 1;
+		break;
 	case 'v':
+		superquiet = 0;
 		verbose++;
 		break;
 	case 'z':
@@ -153,6 +163,14 @@ threadmain(int argc, char **argv)
 
 	rpchangup(sync->ra);
 	rpchangup(sync->rb);
+
+	if(printstats){
+		print("queue highwaters sync=%d work=%d finish=%d triage=%d\n",
+			sync->syncq->m, sync->workq->m, sync->finishq->m,
+			sync->triageq->m);
+		print("rpc in %d out %d zin %d zout %d\n",
+			inrpctot, outrpctot, inzrpctot, outzrpctot);
+	}
 
 	if(expectconflicts != (nsuccess < npending)){
 		if(expectconflicts)
@@ -351,7 +369,9 @@ workstr(Syncpath *s)
 int
 quiet(Syncpath *s)
 {
-	return ((s->action&~1)==DoNothing || (s->action&~1)==DoKids) && verbose == 0;
+	if(superquiet)
+		return 1;
+	return (((s->action&~1)==DoNothing || (s->action&~1)==DoKids)) && verbose == 0;
 }
 
 

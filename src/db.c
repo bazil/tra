@@ -36,6 +36,8 @@
 
 #include "tra.h"
 
+int dbwalks, dbwalklooks, idtostrs, strtoids;
+
 static int dbapplylog(Db*);
 static void ghostbust(Db*, DMap*, Vtime*);
 
@@ -67,6 +69,7 @@ strtoid(Db *db, char *s)
 	if(strcachebystr(&db->strcache, s, &i) >= 0)
 		return i;
 
+strtoids++;
 	k.a = s;
 	k.n = strlen(s);
 	v.a = buf;
@@ -111,6 +114,7 @@ idtostr(Db *db, int i)
 	if((s = strcachebyid(&db->strcache, i)) != nil)
 		return s;
 
+idtostrs++;
 	PSHORT(buf, i);
 	k.a = buf;
 	k.n = sizeof buf;
@@ -363,6 +367,7 @@ dbwalk(Db *db, char **e, int ne, Dbwalk **wp)
 	Dbwalk *w;
 	Stat *s;
 
+dbwalks++;
 	w = emalloc((ne+1)*sizeof(w[0]));
 	w[0].m = db->root;
 	w[0].s = copystat(db->rootstat);
@@ -374,6 +379,7 @@ dbwalk(Db *db, char **e, int ne, Dbwalk **wp)
 		v.n = 0;
 		k.a = e[i];
 		k.n = strlen(k.a);
+dbwalklooks++;
 		if(w[i].m->lookup(w[i].m, &k, &v) < 0)
 			break;
 		if(v.n < 4)
