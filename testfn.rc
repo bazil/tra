@@ -5,17 +5,6 @@ rfork e
 nl='
 '
 
-if(~ $#TRASRV 0)
-	TRASRV=(8.trasrv)
-if(~ $#SYNC 0)
-	SYNC=(8.textui)
-if(~ $#TRADUMP 0)
-	TRADUMP=(8.tradump)
-if(~ $#TRAMKDB 0)
-	TRAMKDB=(8.tramkdb)
-
-tmp=/tmp/tratest
-
 fn die {
 	echo $* : $status>[1=2]
 	exit die
@@ -26,27 +15,47 @@ fn usage {
 	exit usage
 }
 
+
+if(~ $#TRASRV 0)
+	TRASRV=(8.trasrv)
+if(~ $#SYNC 0)
+	SYNC=(8.textui)
+if(~ $#TRADUMP 0)
+	TRADUMP=(8.tradump)
+if(~ $#TRAMKDB 0)
+	TRAMKDB=(8.tramkdb)
+if(~ $#TRATMP 0)
+	TRATMP=/tmp/tratest
+if(~ $#RCSHELL 0){
+	if(test -x /bin/rc){
+		RCSHELL=/bin/rc
+	}else if(test -x /home/ny3/rsc/bin/^`{uname}^/^`{uname -m}^/rc){
+		RCSHELL=/home/ny3/rsc/bin/^`{uname}^/^`{uname -m}^/rc
+	}else
+		die cannot find rcj
+}
+
 fn replica {
-	if(~ $tmp '' || ~ `{cleanname $tmp} /) die not going to remove slash
-	/bin/rm -r $tmp/*
+	if(~ $TRATMP '') die not going to remove slash
+	/bin/rm -fr $TRATMP/*
 	for(i){
-		/bin/mkdir $tmp/$i || die
+		/bin/mkdir $TRATMP/$i || die
 		echo tramkdb... >[1=2]
-		$TRAMKDB -R $tmp/$i.db $i owner descr proto || die
+		$TRAMKDB -R $TRATMP/$i.db $i owner descr proto || die
 		{
-			echo '#!/bin/rc'
-			echo $TRASRV '$*' -r $tmp/$i $tmp/$i.db # $tmp/$i.proto
-		} >$tmp/$i.s || die
-		chmod +x $tmp/$i.s || die replica $i
+			echo '#!'$SHELL
+			echo $TRASRV '$*' -r $TRATMP/$i $TRATMP/$i.db # $TRATMP/$i.proto
+		} >$TRATMP/$i.s || die
+		chmod +x $TRATMP/$i.s || die replica $i
 	}
 }
 
 fn proto {
 	if(! ~ $#* 2)
 		usage 'mount replica proto-addition'
-	if(test -f $tmp/$1.emptyproto)
-		/bin/rm -f $tmp/$1.emptyproto $tmp/$1.proto
-	echo $2 >>$tmp/$1.proto || die proto $1
+	if(test -f $TRATMP/$1.emptyproto)
+		/bin/rm -f $TRATMP/$1.emptyproto $TRATMP/$1.proto
+	echo $2 >>$TRATMP/$1.proto || die proto $1
 }
 
 fn sync {
@@ -63,7 +72,7 @@ fn sync {
 		fn rm
 		fn mkdir
 		echo sync... >[1=2]
-		$SYNC $flags $tmp/$1.s $tmp/$2.s $3 || die sync $1 $2 $3
+		$SYNC $flags $TRATMP/$1.s $TRATMP/$2.s $3 || die sync $1 $2 $3
 	} || die sync $1 $2 $3
 }
 
@@ -71,54 +80,54 @@ fn change {
 	if(! ~ $#* 2 || ! ~ $1 */*)
 		usage 'create replica/path contents'
 
-	test -f $tmp/$1 || die change non-file $1
-	echo $2 >$tmp/$1 || die change $1
+	test -f $TRATMP/$1 || die change non-file $1
+	echo $2 >$TRATMP/$1 || die change $1
 }
 
 fn create {
 	if(! ~ $#* 2 || ! ~ $1 */*)
 		usage 'create replica/path contents'
 
-	test ! -e $tmp/$1 || die create extant file $1
-	echo $2 >$tmp/$1 || die create $1
+	test ! -e $TRATMP/$1 || die create extant file $1
+	echo $2 >$TRATMP/$1 || die create $1
 }
 
 fn mkdir {
 	if(! ~ $#* 1 || ! ~ $1 */*)
 		usage 'mkdir replica/path'
 
-	/bin/mkdir $tmp/$1 || die mkdir $1
+	/bin/mkdir $TRATMP/$1 || die mkdir $1
 }
 
 fn isfile {
 	if(! ~ $#* 1 2 || ! ~ $1 */*)
 		usage 'isfile replica/path [contents]'
 
-	test -f $tmp/$1 || die isfile $1
+	test -f $TRATMP/$1 || die isfile $1
 	if(~ $#* 2)
-		cmp $tmp/$1 <{echo $2} || die isfile $1 $2
+		cmp $TRATMP/$1 <{echo $2} || die isfile $1 $2
 }
 
 fn isdir {
 	if(! ~ $#* 1 || ! ~ $1 */*)
 		usage 'isfile replica/path'
 
-	test -d $tmp/$1 || die isdir $1
+	test -d $TRATMP/$1 || die isdir $1
 }
 
 fn isnot {
 	if(! ~ $#* 1 || ! ~ $1 */*)
 		usage 'isfile replica/path'
 
-	test ! -e $tmp/$1 || die isnot $1
+	test ! -e $TRATMP/$1 || die isnot $1
 }
 
 fn rm {
 	if(! ~ $#* 1 || ! ~ $1 */*)
 		usage 'rm replica/path'
 
-	test -e $tmp/$1 || die rm $1: nonexist
-	/bin/rm -f $tmp/$1
+	test -e $TRATMP/$1 || die rm $1: nonexist
+	/bin/rm -df $TRATMP/$1
 }
 
 fn x {
@@ -130,7 +139,7 @@ fn dump {
 		usage 'dump replica'
 
 	echo '______________' db $1 '________________'
-	$TRADUMP $tmp/$1.db
+	$TRADUMP $TRATMP/$1.db
 	echo '____________________________________'
 }
 
@@ -146,7 +155,7 @@ fn coverage {
 # 	if(! ~ $#* 1 || ~ $1 */*)
 # 		usage 'scan replica'
 # 
-# 	echo 'Tscan /' | $tmp/$1.s -t >/dev/null
+# 	echo 'Tscan /' | $TRATMP/$1.s -t >/dev/null
 # }
 
 fn run {
