@@ -5,5 +5,5 @@ sync a b
 isfile b/hello 'hello world'
 rm b/hello
 change a/hello 'goodbye world'
-sync -Cd a b
+sync -C a b
 
