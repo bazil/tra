@@ -4,6 +4,9 @@ create a/hello 'hello world'
 sync a b
 isfile b/hello 'hello world'
 rm b/hello
-sync b a
+scan b
+dump a
+dump b
+sync -D b a
 isnot a/hello
 

@@ -26,6 +26,8 @@ if(~ $#TRADUMP 0)
 	TRADUMP=(8.tradump)
 if(~ $#TRAMKDB 0)
 	TRAMKDB=(8.tramkdb)
+if(~ $#TRASCAN 0)
+	TRASCAN=(8.trascan)
 if(~ $#TRATMP 0)
 	TRATMP=/tmp/tratest
 RMFLAG=()
@@ -163,6 +165,13 @@ fn dump {
 	echo '______________' db $1 '________________'
 	$TRADUMP $TRATMP/$1.db
 	echo '____________________________________'
+}
+
+fn scan {
+	if(! ~ $#* 1 || ~ $1 */*)
+		usage 'scan replica'
+
+	$TRASCAN $TRATMP/$1.s
 }
 
 fn uncover {
