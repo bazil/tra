@@ -44,20 +44,8 @@ freestat(Stat *s)
 	if(s == nil)
 		return;
 
-	if(s->uid)
-		free(s->uid);
-	if(s->gid)
-		free(s->gid);
-	if(s->muid)
-		free(s->muid);
 	if(s->localsig.a)
 		free(s->localsig.a);
-	if(s->localuid)
-		free(s->localuid);
-	if(s->localgid)
-		free(s->localgid);
-	if(s->localmuid)
-		free(s->localmuid);
 
 	freevtime(s->synctime);
 	freevtime(s->mtime);
@@ -75,20 +63,8 @@ copystat(Stat *s)
 		return s;
 	ns = mkstat();
 	*ns = *s;
-	if(ns->uid)
-		ns->uid = estrdup(ns->uid);
-	if(ns->gid)
-		ns->gid = estrdup(ns->gid);
-	if(ns->muid)
-		ns->muid = estrdup(ns->muid);
 	ns->localsig.a = emalloc(ns->localsig.n);
 	memmove(ns->localsig.a, s->localsig.a, ns->localsig.n);
-	if(ns->localuid)
-		ns->localuid = estrdup(ns->localuid);
-	if(ns->localgid)
-		ns->localgid = estrdup(ns->localgid);
-	if(ns->localmuid)
-		ns->localmuid = estrdup(ns->localmuid);
 	if(ns->synctime)
 		ns->synctime = copyvtime(ns->synctime);
 	if(ns->mtime)

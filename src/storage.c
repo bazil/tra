@@ -213,8 +213,9 @@ abort();
 			goto Error;
 }
 	}
+	free(b);
 	free(buf);
-	return fsync(ds->fd);
+	return 0 && fsync(ds->fd);
 }
 
 static int
@@ -1097,12 +1098,14 @@ createdstore(char *path, uint pagesz)
 	return openpathfd(path, fd);
 }
 
+int dcs;
 int
 datumcmp(Datum *p, Datum *q)
 {
 	int r;
 	uint n;
 
+dcs++;
 	n = p->n;
 	if(n > q->n)
 		n = q->n;

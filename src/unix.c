@@ -219,6 +219,7 @@ syscommit(Fid *fid)
 	close(wfd);
 	close(fid->fd);
 	fid->fd = -1;
+	free(buf);
 	return 0;
 }
 
