@@ -39,6 +39,10 @@ RMFLAG=()
 if(~ $#RCSHELL 0){
 	if(test -x /bin/rc)
 		RCSHELL=/bin/rc
+	if(~ $#RCSHELL 0 && test -x /usr/local/bin/rc){
+		RMFLAG=-d
+		RCSHELL=/usr/local/bin/rc
+	}
 	if(~ $#RCSHELL 0 && test -x /home/ny3/rsc/bin/^`{uname}^/^`{uname -m}^/rc){
 		RMFLAG=-d
 		RCSHELL=/home/ny3/rsc/bin/^`{uname}^/^`{uname -m}^/rc
