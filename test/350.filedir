@@ -1,7 +1,9 @@
-x file/directory conflict
+x file/directory non conflict
 replica a b
 create a/foo 'hello world'
 sync a b
+isfile b/foo
 rm b/foo
 mkdir b/foo
-sync -C b a
+sync b a
+isdir a/foo
