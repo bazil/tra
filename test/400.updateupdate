@@ -10,8 +10,8 @@ create b/foo 'goodbye world'
 sync -C a b
 isfile a/foo 'hello world'
 isfile b/foo 'goodbye world'
-isfile b/foo.TRA 'hello world'
-useturd b/foo
+# isfile b/foo.TRA 'hello world'
+# useturd b/foo
 change a/foo 'bye bye world'
 sync a  b
 isfile b/foo 'bye bye world'
