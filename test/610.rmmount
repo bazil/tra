@@ -5,6 +5,15 @@ create a/goodbye 'goodbye world'
 ignore a 'exclude goodbye'
 sync a b
 isnot b/goodbye
+ignore a 'exclude goodby*'
+sync a b
+isnot b/goodbye
+ignore a 'exclude goodby?'
+sync a b
+isnot b/goodbye
+ignore a 'exclude goodby*e'
+sync a b
+isnot b/goodbye
 ignore a ''
 sync b a
 isfile a/goodbye
