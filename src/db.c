@@ -1447,6 +1447,7 @@ struct D
 {
 	Db *db;
 	Path *p;
+	Vtime *vt;
 	int fd;
 };
 
@@ -1467,8 +1468,9 @@ dumpwalk(void *v, Datum *key, Datum *val)
 	free(name);
 	s = dbparsestat(a.db, (uchar*)val->a+4, val->n-4);
 	addr = LONG((uchar*)val->a);
+	s->synctime = maxvtime(s->synctime, a.vt);
 	fprint(a.fd, "%P\tlist=%ux\t\t%$\n", a.p, addr, s);
-	freestat(s);
+	a.vt = s->synctime;
 	if(addr != 0){
 		m = dmapclist(a.db->listcache, a.db->s, addr, 0);
 		if(m != nil){
@@ -1477,14 +1479,17 @@ dumpwalk(void *v, Datum *key, Datum *val)
 		}else
 			fprint(a.fd, "\t\t-no valid db for %P\n", a.p);
 	}
+	freestat(s);
 	freepath(a.p);
 }
-	
+
 void
 dumpdb(Db *db, int fd)
 {
 	D a;
 	Path *p;
+	int now;
+	char *name;
 
 	fprint(fd, "meta:\n");
 	/* intptr cast to placate 64-bit gcc */
@@ -1496,11 +1501,17 @@ dumpdb(Db *db, int fd)
 	fprint(fd, "idtostr:\n");
 	db->idtostr->walk(db->idtostr, metawalk, (void*)(intptr)fd);
 
+	now = atoi(dbgetmeta(db, "now"));
+	name = dbgetmeta(db, "sysname");
+
+	a.vt = mkvtime1(name, now, time(0));
+	db->rootstat->synctime = maxvtime(db->rootstat->synctime, a.vt);
 	p = nil;
 	fprint(fd, "%P\t%$\n", p, db->rootstat);
 	a.db = db;
 	a.p = p;
 	a.fd = fd;
+	a.vt = db->rootstat->synctime;
 	db->root->walk(db->root, dumpwalk, &a);
 }
 
