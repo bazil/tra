@@ -47,7 +47,7 @@ enum	/* ON-DISK: DON'T CHANGE */
 	LogPutstat,
 	LogXXXDelstat,
 
-	LogSize = 32*1024
+	LogSize = 1024*1024
 };
 
 /*
@@ -62,6 +62,10 @@ strtoid(Db *db, char *s)
 
 	if(s == nil)
 		return 0;
+	s = atom(s);
+
+	if(strcachebystr(&db->strcache, s, &i) >= 0)
+		return i;
 
 	k.a = s;
 	k.n = strlen(s);
@@ -70,7 +74,9 @@ strtoid(Db *db, char *s)
 	if(db->strtoid->lookup(db->strtoid, &k, &v) >= 0){
 		if(v.n != 2)
 			panic("db: bad data in strtoid map");
-		return SHORT(buf);
+		i = SHORT(buf);
+		strcache(&db->strcache, s, i);
+		return i;
 	}
 
 	k.a = buf;
@@ -88,7 +94,7 @@ strtoid(Db *db, char *s)
 		panic("db: cannot create new string");
 	if(db->strtoid->insert(db->strtoid, &v, &k, DMapCreate) < 0)
 		panic("db: cannot create new string");
-
+	strcache(&db->strcache, s, i);
 	return i;
 }
 
@@ -102,6 +108,9 @@ idtostr(Db *db, int i)
 	if(i == 0)
 		return nil;
 
+	if((s = strcachebyid(&db->strcache, i)) != nil)
+		return s;
+
 	PSHORT(buf, i);
 	k.a = buf;
 	k.n = sizeof buf;
@@ -113,7 +122,9 @@ idtostr(Db *db, int i)
 	v.a = s;
 	if(db->idtostr->lookup(db->idtostr, &k, &v) < 0)
 		panic("idtostr");
-	return v.a;
+	s = atom(s);
+	strcache(&db->strcache, s, i);
+	return s;
 }
 
 static char*
