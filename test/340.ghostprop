@@ -1,0 +1,8 @@
+x ghost propagation
+replica a b c
+create a/foo 'hello world'
+sync a b
+rm b/foo
+sync b c
+sync a c
+isnot c/foo
