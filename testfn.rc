@@ -8,7 +8,7 @@ nl='
 if(~ $#TRASRV 0)
 	TRASRV=(python srv.py)
 if(~ $#SYNC 0)
-	SYNC=(python textui.py)
+	SYNC=(python textui.py -T)
 if(~ $#TRADUMP 0)
 	TRADUMP=(python dumpdb.py)
 if(~ $#TRAMKDB 0)
@@ -130,6 +130,14 @@ fn dump {
 	echo '______________' db $1 '________________'
 	$TRADUMP $tmp/$1.db
 	echo '____________________________________'
+}
+
+fn uncover {
+	/bin/rm .coverage *,cover >[2]/dev/null
+}
+
+fn coverage {
+	python coverage.py -a sync.py
 }
 
 # fn scan {
