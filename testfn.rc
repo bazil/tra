@@ -21,19 +21,22 @@ if(test -f testsetup)
 if(~ $#TRASRV 0)
 	TRASRV=(8.trasrv)
 if(~ $#SYNC 0)
-	SYNC=(8.textui)
+	SYNC=(8.minisync -A)
 if(~ $#TRADUMP 0)
 	TRADUMP=(8.tradump)
 if(~ $#TRAMKDB 0)
 	TRAMKDB=(8.tramkdb)
 if(~ $#TRATMP 0)
 	TRATMP=/tmp/tratest
+RMFLAG=()
 if(~ $#RCSHELL 0){
-	if(test -x /bin/rc){
+	if(test -x /bin/rc)
 		RCSHELL=/bin/rc
-	}else if(test -x /home/ny3/rsc/bin/^`{uname}^/^`{uname -m}^/rc){
+	if(~ $#RCSHELL 0 && test -x /home/ny3/rsc/bin/^`{uname}^/^`{uname -m}^/rc){
+		RMFLAG=-d
 		RCSHELL=/home/ny3/rsc/bin/^`{uname}^/^`{uname -m}^/rc
-	}else
+	}
+	if(~ $#RCSHELL 0)
 		die cannot find rcj
 }
 
@@ -43,10 +46,11 @@ fn replica {
 	for(i){
 		/bin/mkdir $TRATMP/$i || die
 		echo tramkdb... >[1=2]
+		echo >$TRATMP/$i.ignore || die
 		$TRAMKDB -R $TRATMP/$i.db $i || die
 		{
-			echo '#!'$SHELL
-			echo $TRASRV '$*' -r $TRATMP/$i $TRATMP/$i.db # $TRATMP/$i.proto
+			echo '#!'$RCSHELL
+			echo $TRASRV '$*' -i $TRATMP/$i.ignore -r $TRATMP/$i $TRATMP/$i.db # $TRATMP/$i.proto
 		} >$TRATMP/$i.s || die
 		chmod +x $TRATMP/$i.s || die replica $i
 	}
@@ -108,6 +112,7 @@ fn isfile {
 	test -f $TRATMP/$1 || die isfile $1
 	if(~ $#* 2)
 		cmp $TRATMP/$1 <{echo $2} || die isfile $1 $2
+	status=''
 }
 
 fn isdir {
@@ -129,10 +134,22 @@ fn rm {
 		usage 'rm replica/path'
 
 	test -e $TRATMP/$1 || die rm $1: nonexist
-	if(test -d $TRATMP/$1){
+	if(test -d $TRATMP/$1 && test -f /etc/passwd)
 		rmdir $TRATMP/$1
-	}else
+	if(! test -d $TRATMP/$1|| ! test -f /etc/passwd)
 		/bin/rm -f $TRATMP/$1
+}
+
+fn ignore {
+	if(~ $#* 0 1)
+		usage 'ignore replica line ...'
+	r=$1
+	shift
+	{
+		for(i){
+			echo $i
+		}
+	} >$TRATMP/$r.ignore
 }
 
 fn x {

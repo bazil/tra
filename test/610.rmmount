@@ -2,7 +2,9 @@ x test mount omission
 replica a b
 create a/hello 'hello world'
 create a/goodbye 'goodbye world'
-proto a 'hello'
+ignore a 'exclude goodbye'
 sync a b
 isnot b/goodbye
-
+ignore a ''
+sync b a
+isfile a/goodbye
