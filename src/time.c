@@ -108,7 +108,7 @@ intersectvtime(Vtime *a, Vtime *b)
 		while(j < b->nl && strcmp(a->l[i].m, b->l[j].m) > 0)
 			j++;
 
-		if(j < b->nl && strcmp(a->l[i].m, b->l[j].m) == 0)
+		if(j < b->nl && a->l[i].m == b->l[j].m)
 			if(a->l[i].t <= b->l[j].t)
 				return 1;
 	}
@@ -127,7 +127,12 @@ leqvtime(Vtime *a, Vtime *b)
 
 	j=0;
 	for(i=0; i<a->nl; i++){
-		while(j < b->nl && strcmp(a->l[i].m, b->l[j].m) != 0)
+		/*
+		 * Technically we should stop once a->l[i].m ">" b->l[j].m,
+		 * but either way the result is the same -- if the entry is missing
+		 * from b, we're not going to do another loop iteration.
+		 */
+		while(j < b->nl && a->l[i].m != b->l[j].m)
 			j++;
 		if(j==b->nl)	/* entry missing from b */
 			return 0;
@@ -159,7 +164,7 @@ maxvtime(Vtime *a, Vtime *b)
 		while(j < b->nl && strcmp(a->l[i].m, b->l[j].m) > 0)
 			j++, k++;
 
-		if(j < b->nl && strcmp(a->l[i].m, b->l[j].m) == 0)
+		if(j < b->nl && a->l[i].m == b->l[j].m)
 			j++;
 		k++;
 	}
@@ -176,8 +181,9 @@ maxvtime(Vtime *a, Vtime *b)
 		}
 
 		c[k] = a->l[i];
-		if(j < b->nl && strcmp(a->l[i].m, b->l[j].m) == 0){
-			c[k] = b->l[j];
+		if(j < b->nl && a->l[i].m == b->l[j].m){
+			if(c[k].t < b->l[j].t)
+				c[k] = b->l[j];
 			j++;
 		}
 		k++;
@@ -216,7 +222,7 @@ unmaxvtime(Vtime *a, Vtime *b)
 	j=0;
 	wi=0;
 	for(ri=0; ri<a->nl; ri++){
-		while(j < b->nl && strcmp(a->l[ri].m, b->l[j].m) != 0)
+		while(j < b->nl && a->l[ri].m != b->l[j].m)
 			j++;
 		if(j==b->nl || a->l[ri].t > b->l[j].t){
 			/* entry missing from b, or b is smaller */
@@ -257,7 +263,7 @@ minvtime(Vtime *a, Vtime *b)
 	for(i=0; i<a->nl; i++){
 		while(j < b->nl && strcmp(a->l[i].m, b->l[j].m) > 0)
 			j++;
-		if(j < b->nl && strcmp(a->l[i].m, b->l[j].m) == 0)
+		if(j < b->nl && a->l[i].m == b->l[j].m)
 			j++, k++;
 	}
 	kk=k;
@@ -268,7 +274,7 @@ minvtime(Vtime *a, Vtime *b)
 	for(i=0; i<a->nl; i++){
 		while(j < b->nl && strcmp(a->l[i].m, b->l[j].m) > 0)
 			j++;
-		if(j < b->nl && strcmp(a->l[i].m, b->l[j].m) == 0){
+		if(j < b->nl && a->l[i].m == b->l[j].m){
 			c[k] = a->l[i];
 			if(c[k].t > b->l[j].t)
 				c[k] = b->l[j];
@@ -301,7 +307,7 @@ readbufltime(Buf *b, Ltime *t)
 		longjmp(b->jmp, BufData);
 	t->t = readbufl(b);
 	t->wall = readbufl(b);
-	t->m = readbufstringdup(b);
+	t->m = atom(readbufstring(b));
 }
 
 void

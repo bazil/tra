@@ -13,6 +13,7 @@ struct Kids
 static void
 kidthread(void *a)
 {
+	void *p;
 	Kids *k;
 
 	k = a;
@@ -23,8 +24,9 @@ kidthread(void *a)
 		k->err = rpcerror();
 	endclient();
 	threadstate("kidthread end");
+	p = k->c;
 	send(k->c, k);
-	threadstate("DONE %p", k->c);
+	threadstate("DONE %p", p);
 }
 static int
 mergekids(Syncpath *s, Kid *a, int na, Kid *b, int nb, int n)

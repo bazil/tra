@@ -99,6 +99,12 @@ copystat(Stat *s)
 }
 
 char*
+readbufstringatom(Buf *b)
+{
+	return atom(readbufstring(b));
+}
+
+char*
 readbufstringdup(Buf *b)
 {
 	char *s;

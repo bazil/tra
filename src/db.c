@@ -132,6 +132,22 @@ dbreadbufstringdup(Db *db, Buf *b)
 	return s;
 }
 
+static char*
+dbreadbufstringatom(Db *db, Buf *b)
+{
+	int i;
+	char *s;
+
+	i = readbufc(b)<<8;
+	i |= readbufc(b);
+	if(i == 0)
+		return nil;
+	s = idtostr(db, i);
+	if(s == nil)
+		panic("db: bad string pointer %d", i);
+	return atom(s);
+}
+
 static void
 dbwritebufstring(Db *db, Buf *b, char *s)
 {
@@ -166,7 +182,7 @@ dbreadbufltime(Db *db, Buf *b, Ltime *t)
 	}
 	t->t = readbufl(b);
 	t->wall = readbufl(b);
-	t->m = dbreadbufstringdup(db, b);
+	t->m = dbreadbufstringatom(db, b);
 }
 
 static void
