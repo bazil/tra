@@ -1,0 +1,12 @@
+x directory tree propagate
+replica a b
+mkdir a/foo
+mkdir a/foo/bar
+mkdir a/foo/bar/baz
+create a/foo/bar/baz/quux 'hello world'
+sync a b
+isdir b/foo
+isdir b/foo/bar
+isdir b/foo/bar/baz
+isfile b/foo/bar/baz/quux 'hello world'
+

@@ -1,0 +1,10 @@
+x test auto-resolver
+replica a b c d
+create a/hello 'hello world'
+create d/hello 'hello world'
+sync a b
+sync d c
+sync b c
+sync c d
+sync d a
+

@@ -1,0 +1,13 @@
+x simple update/update resolution choice 3
+replica a b
+create a/foo 'hello world'
+create b/foo 'goodbye world'
+sync -C a b
+isfile a/foo 'hello world'
+isfile b/foo 'goodbye world'
+isfile b/foo.TRA 'hello world'
+sync a b
+change a/foo 'bye bye world'
+sync -C a b
+isfile b/foo 'goodbye world'
+

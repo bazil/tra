@@ -1,0 +1,19 @@
+x test auto-resolver mail merge
+replica a b c d
+create a/hello 'From rsc Wed May 30 23:48:24 EDT 2001
+Subject: hello world
+
+hello there world
+
+'
+create b/hello 'From rsc Wed May 30 23:48:24 EDT 2001
+Subject: goodbye world
+
+goodbye there world
+
+'
+sync a b
+sync d c
+sync b c
+sync c d
+sync d a

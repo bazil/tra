@@ -1,0 +1,9 @@
+x simple change propagate
+replica a b
+create a/hello 'hello world'
+sync a b
+isfile b/hello 'hello world'
+change a/hello 'goodbye world'
+sync a b
+isfile b/hello 'goodbye world'
+

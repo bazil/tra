@@ -1,0 +1,8 @@
+x test mount omission
+replica a b
+create a/hello 'hello world'
+create a/goodbye 'goodbye world'
+proto a 'hello'
+sync a b
+isnot b/goodbye
+

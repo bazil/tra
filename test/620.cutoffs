@@ -1,0 +1,9 @@
+x test cutoffs
+replica a b c
+mkdir a/foo
+mkdir a/foo/bar
+mkdir a/foo/bar/baz
+create a/foo/bar/baz/quux 'hello world'
+sync a b
+sync -D a b
+

@@ -1,0 +1,27 @@
+x resolution example 1 from our paper, case 2
+replica a b c d
+create a/foo 'abcd'
+sync a b
+sync a c
+sync a d
+change b/foo 'ab'
+sync b a
+change c/foo 'cd'
+sync c d
+change a/foo 'a'
+change d/foo 'd'
+sync -C b c
+# suppose we resolve by choosing c's copy
+sync c b
+isfile b/foo 'cd'
+# then there should be a conflict at ab
+sync -C a b
+isfile b/foo 'cd'
+sync b a
+isfile a/foo 'cd'
+# but no conflict at cd
+sync c d
+sync d c
+isfile a/foo 'cd'
+isfile d/foo 'd'
+

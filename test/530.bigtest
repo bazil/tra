@@ -1,0 +1,30 @@
+x resolution example 2 from our paper
+replica a b c d
+create a/foo 'abcd'
+sync a b
+sync a c
+sync a d
+change b/foo 'ab'
+sync b a
+change c/foo 'cd'
+sync c d
+change a/foo 'a'
+# change d/foo 'd' # d does not change the file in this example.
+sync -C b c
+# suppose we resolve by choosing b's copy
+useturd c/foo
+sync c b
+# then there should be no conflict at ab
+sync a b
+sync b a
+# nor at cd
+sync c d
+sync d c
+isfile a/foo 'a'
+isfile b/foo 'a'
+isfile c/foo 'ab'
+isfile d/foo 'ab'
+# moving along, if c syncs with a, it should take a's copy
+sync a c
+isfile c/foo 'a'
+

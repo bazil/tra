@@ -1,0 +1,9 @@
+x delete propagate 2
+replica a b
+create a/hello 'hello world'
+sync a b
+isfile b/hello 'hello world'
+rm b/hello
+sync b a
+isnot a/hello
+

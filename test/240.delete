@@ -1,0 +1,11 @@
+x delete propagate 2 between three
+replica a b c
+create a/hello 'hello world'
+sync a c
+sync c b
+isfile b/hello 'hello world'
+rm b/hello
+sync b c
+sync c a
+isnot a/hello
+

@@ -1,0 +1,9 @@
+x simple update/update really create/create conflict
+replica a b
+create a/foo 'hello world'
+create b/foo 'goodbye world'
+sync -C a b
+isfile a/foo 'hello world'
+isfile b/foo 'goodbye world'
+isfile b/foo.TRA 'hello world'
+

@@ -1,0 +1,6 @@
+x simple create propagate 
+replica a b
+create a/hello 'hello world'
+sync a b
+isfile b/hello 'hello world'
+

@@ -1,0 +1,25 @@
+x resolution example 1 from our paper, case 3
+replica a b c d
+create a/foo 'abcd'
+sync a b
+sync a c
+sync a d
+change b/foo 'ab'
+sync b a
+change c/foo 'cd'
+sync c d
+change a/foo 'a'
+change d/foo 'd'
+sync -C b c
+# suppose we resolve by making a new file
+change c/foo 'bc'
+sync c b
+# then there should be a conflict at ab
+sync -C a b
+sync b a
+# and a conflict at cd
+sync -C c d
+sync d c
+isfile a/foo 'bc'
+isfile d/foo 'd'
+

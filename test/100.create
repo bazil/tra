@@ -1,0 +1,7 @@
+x simple propagate between three
+replica a b c
+create a/hello 'hello world'
+sync a c
+sync c b
+isfile b/hello 'hello world'
+

@@ -1,0 +1,7 @@
+x directory propagate between three
+replica a b c
+mkdir a/dir
+sync a c
+sync c b
+isdir b/dir
+

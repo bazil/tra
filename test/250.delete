@@ -1,0 +1,20 @@
+x delete tree propagate between three
+replica a b c
+mkdir a/foo
+mkdir a/foo/bar
+mkdir a/foo/bar/baz
+create a/foo/bar/baz/quux 'hello world'
+sync a c
+sync c b
+isdir b/foo
+isdir b/foo/bar
+isdir b/foo/bar/baz
+isfile b/foo/bar/baz/quux 'hello world'
+rm a/foo/bar/baz/quux
+rm a/foo/bar/baz
+rm a/foo/bar
+rm a/foo
+sync a c
+sync c b
+isnot b/foo
+

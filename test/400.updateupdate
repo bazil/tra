@@ -1,0 +1,18 @@
+# we want to check that resolution is done
+# properly.  we could examine the timestamp but
+# that requires figuring it out.  instead, we can do
+# another sync and check that it works as expected.
+
+x simple update/update resolution choice 1
+replica a b
+create a/foo 'hello world'
+create b/foo 'goodbye world'
+sync -C a b
+isfile a/foo 'hello world'
+isfile b/foo 'goodbye world'
+isfile b/foo.TRA 'hello world'
+useturd b/foo
+change a/foo 'bye bye world'
+sync a  b
+isfile b/foo 'bye bye world'
+

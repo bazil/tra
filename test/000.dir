@@ -1,0 +1,6 @@
+x directory propagate
+replica a b
+mkdir a/dir
+sync a b
+isdir b/dir
+
