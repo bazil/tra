@@ -1128,7 +1128,7 @@ opendstore(char *path)
 {
 	int fd;
 
-	if((fd = open(path, ORDWR)) < 0)
+	if((fd = open(path, ORDWR|OLOCK)) < 0)
 		return nil;
 	return openpathfd(path, fd);
 }

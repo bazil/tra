@@ -1266,7 +1266,7 @@ fprint(2, "rootstat block %p\n", db->rootstatblock);
 		snprint(err, sizeof err, "logpath: %r");
 		goto Err2;
 	}
-	if((logfd = open(logpath, ORDWR)) < 0){
+	if((logfd = open(logpath, ORDWR|OLOCK)) < 0){
 		snprint(err, sizeof err, "open %s: %r", logpath);
 		goto Err2;
 	}
