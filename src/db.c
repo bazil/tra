@@ -1391,6 +1391,7 @@ if(r<0) {fprint(2, "cannot write: %r\n"); abort(); }
 	db->s->close(db->s);
 	dbresetlog(db);
 	close(db->logfd);
+	closelistcache(db->listcache);
 	free(db);
 	return r;
 }
@@ -1445,7 +1446,7 @@ dumpwalk(void *v, Datum *key, Datum *val)
 	u32int addr;
 
 	a = *(D*)v;
-	name = emalloc(key->n+1);
+	name = emallocnz(key->n+1);
 	memmove(name, key->a, key->n);
 	name[key->n] = '\0';
 	a.p = mkpath(a.p, name);
