@@ -1,4 +1,4 @@
-x test cutoffs
+x test cutoffs -- second sync should not visit foo or below.
 replica a b c
 mkdir a/foo
 mkdir a/foo/bar
