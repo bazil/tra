@@ -44,9 +44,6 @@ replread(Replica *r)
 		goto Error;
 	}
 
-	if(tcanread(r->rfd) < n)
-		replflush(r);
-
 	b = mkbuf(nil, n);
 	if(treadn(r->rfd, b->p, n) != n){
 		r->err = "eof reading input";
