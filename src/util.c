@@ -321,4 +321,3 @@ initfmt(void)
 	fmtinstall('$', statfmt);
 	fmtinstall('V', vtimefmt);
 }
-

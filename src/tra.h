@@ -512,6 +512,7 @@ int		hashcmp(const void*, const void*);
 Vtime*		_infvtime(int);
 int		ignorepath(Apath*);
 #define		infvtime()	_infvtime(0)
+void		threadstate(char*, ...);
 void		initfmt(void);
 int		intersectvtime(Vtime*, Vtime*);	/* does a intersect b? */
 int		isinfvtime(Vtime*);
