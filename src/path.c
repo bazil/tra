@@ -51,7 +51,6 @@ readbufpath(Buf *b)
 {
 	int i, n;
 	Path *p;
-	char *s;
 
 	if(readbufc(b) != 0)
 		longjmp(b->jmp, BufData);

@@ -559,6 +559,7 @@ Vtime*		readbufvtime(Buf*);
 void		replclose(Replica*);
 Buf*		replread(Replica*);
 int		replwrite(Replica*, Buf*);
+int		replflush(Replica*);
 void		resolve(Syncpath*, int);
 int		rpcaddtime(Replica*, Path*, Vtime*, Vtime*);
 int		rpcclose(Replica*, int);

@@ -70,7 +70,7 @@ isinfvtime(Vtime *a)
 Vtime*
 copyvtime(Vtime *a)
 {
-	int i, n;
+	int n;
 	Vtime *b;
 
 	if(isinfvtime(a))
