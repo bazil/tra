@@ -175,7 +175,9 @@ syskids(char *tpath, Sysstat ***pk, Sysstat *ss)
 		if(n%32==0)
 			k = erealloc(k, (n+32)*sizeof(k[0]));
 		k[n] = emalloc(sizeof(Sysstat));
+#undef estrdup
 		k[n]->name = estrdup(de->d_name);
+#define estrdup atom
 		n++;
 	}
 	free(s);
@@ -359,7 +361,7 @@ sysstat(char *tpath, Stat *s, int recordchanges, Sysstat *ss)
 	dmode = stat2mode(tpath, &d);
 	duid = uid2str(d.st_uid);
 	dgid = gid2str(d.st_gid);
-	dmuid = "";	/* can be stat2muid(tpath, &d) if we need */
+	dmuid = atom("");	/* can be stat2muid(tpath, &d) if we need */
 
 	if(dmode&DMDIR)
 		nstate = SDir;
@@ -405,17 +407,17 @@ sysstat(char *tpath, Stat *s, int recordchanges, Sysstat *ss)
 	}
 
 	if(s->localuid==nil || strcmp(s->localuid, duid) != 0){
-		s->localuid = estrdup(duid);
+		s->localuid = duid;
 		if(recordchanges && config("setuid")){
-			s->uid = estrdup(s->localuid);
+			s->uid = s->localuid;
 			changed = 1;
 		}
 	}
 
 	if(s->localgid==nil || strcmp(s->localgid, dgid) != 0){
-		s->localgid = estrdup(dgid);
+		s->localgid = dgid;
 		if(recordchanges && config("setgid")){
-			s->gid = estrdup(s->localgid);
+			s->gid = s->localgid;
 			changed = 1;
 		}
 	}
@@ -457,7 +459,7 @@ if(0)			fprint(2, "shafile %s length %lud %lud datum %d/%.*H %d/%.*H\n",
 	 */
 
 	if(contentschanged){
-		s->muid = estrdup(dmuid);
+		s->muid = dmuid;
 	}
 
 	return changed;
@@ -500,10 +502,10 @@ syswstat(char *tpath, Stat *s, Stat *t)
 		if(config("setuid")){
 			if((u=str2uid(t->uid))!=(uid_t)-1 
 			&& chown(tpath, u, (gid_t)-1)>=0){
-				s->localuid = estrdup(t->uid);
+				s->localuid = atom(t->uid);
 			}
 		}
-		s->uid = estrdup(t->uid);
+		s->uid = atom(t->uid);
 		changed = 1;
 	}
 
@@ -512,10 +514,10 @@ syswstat(char *tpath, Stat *s, Stat *t)
 		if(config("setgid")){
 			if((g=str2gid(t->gid))!=(gid_t)-1
 			&& chown(tpath, (uid_t)-1, g)>=0){
-				s->localgid = estrdup(t->gid);
+				s->localgid = atom(t->gid);
 			}
 		}
-		s->gid = estrdup(t->gid);
+		s->gid = atom(t->gid);
 		changed = 1;
 	}
 
@@ -549,7 +551,7 @@ syswstat(char *tpath, Stat *s, Stat *t)
 	}
 
 	if(contentschanged){
-		s->muid = estrdup(t->muid);
+		s->muid = atom(t->muid);
 	}
 
 	return changed;
