@@ -3,5 +3,6 @@ replica a b
 create a/hello 'hello world'
 chmod 467 $TRATMP/a/hello
 sync a b
-echo mode should be 467
-ls -l b/hello
+echo mode should be 467 when using -o setmode
+isfile b/hello
+ls -l $TRATMP/b/hello
