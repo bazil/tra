@@ -58,7 +58,7 @@ enum	/* ON-DISK: DON'T CHANGE */
 static int
 strtoid(Db *db, char *s)
 {
-	int i;
+	int i, j;
 	Datum k, v;
 	uchar buf[4];
 
@@ -84,13 +84,20 @@ strtoids++;
 
 	k.a = buf;
 	k.n = 2;
-	for(i=1;; i++){
-		PSHORT(buf, i);
+	j = rand()%65535;
+	for(i=0; i<65535; i++){
+		if(++j == 65536)
+			j = 1;
+		PSHORT(buf, j);
 		v.a = nil;
 		v.n = 0;
 		if(db->idtostr->lookup(db->idtostr, &k, &v) < 0)
 			break;
+		free(v.a);
 	}
+	if(i==65535)
+		panic("db: too many strings");
+
 	v.a = s;
 	v.n = strlen(s);
 	if(db->idtostr->insert(db->idtostr, &k, &v, DMapCreate) < 0)
@@ -122,11 +129,8 @@ idtostrs++;
 	v.n = 0;
 	if(db->idtostr->lookup(db->idtostr, &k, &v) < 0)
 		return nil;
-	s = emalloc(v.n+1);
-	v.a = s;
-	if(db->idtostr->lookup(db->idtostr, &k, &v) < 0)
-		panic("idtostr");
-	s = atom(s);
+	s = atom(v.a);
+	free(v.a);
 	strcache(&db->strcache, s, i);
 	return s;
 }
@@ -384,9 +388,6 @@ dbwalklooks++;
 			break;
 		if(v.n < 4)
 			panic("dbwalk: bad db data");
-		v.a = emalloc(v.n);
-		if(w[i].m->lookup(w[i].m, &k, &v) < 0)
-			panic("dbwalk: second lookup failed");
 		addr = LONG((uchar*)v.a);
 		s = dbparsestat(db, (uchar*)v.a+4, v.n-4);
 		if(s == nil)
@@ -726,6 +727,7 @@ dbgetmeta(Db *db, char *key)
 
 	if(db->meta->lookup(db->meta, &k, &v) < 0)
 		return nil;
+	free(v.a);
 	v.a = emalloc(v.n+1);
 	((char*)v.a)[v.n] = '\0';
 	if(db->meta->lookup(db->meta, &k, &v) < 0)
@@ -1374,6 +1376,7 @@ closedb(Db *db)
 	int r;
 
 	if(db->breakwrite){
+		free(db->logbuf);
 		free(db);
 		return 0;
 	}
@@ -1392,6 +1395,7 @@ if(r<0) {fprint(2, "cannot write: %r\n"); abort(); }
 	db->s->close(db->s);
 	dbresetlog(db);
 	close(db->logfd);
+	free(db->logbuf);
 	free(db);
 	return r;
 }

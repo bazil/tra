@@ -258,13 +258,13 @@ dclistlookups++;
 			switch(datumcmp(&dir->de[i].key, key)){
 			case 0:
 				n = dir->de[i].val.n;
-/* RSC 
+
 				if(val->n == 0 && val->a == nil){
 					val->n = n;
 					val->a = emallocnz(n+1);
 					((char*)val->a)[n] = 0;
 				}
-*/
+
 				if(n > val->n)
 					n = val->n;
 				if(n > 0)

@@ -126,13 +126,13 @@ cmaplookups++;
 	}
 	e = (Entry*)a;
 	n = e->v.n;
-/* RSC
+
 	if(v->n == 0 && v->a == nil){
 		v->n = n;
 		v->a = emallocnz(n+1);
 		((char*)v->a)[n] = 0;
 	}
-*/
+
 	if(n > v->n)
 		n = v->n;
 	if(n > 0)
