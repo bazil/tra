@@ -9,15 +9,13 @@
 #include <stdio.h>	/* for _remove_, of course */
 #include "tra.h"
 
-#undef ctime
+Strcache uidcache;
+Strcache gidcache;
 
 char*
 sysctime(long t)
 {
-	time_t tt;
-
-	tt = t;
-	return ctime(&tt);
+	return ctime(t);
 }
 
 void
@@ -256,45 +254,75 @@ shafile(uchar d[20], char *file)
 char*
 gid2str(gid_t gid)
 {
+	char *s;
 	struct group *g;
+
+	if((s = strcachebyid(&gidcache, gid)) != nil)
+		return s;
 
 	g = getgrgid(gid);
 	if(g == nil)
-		return "";
-	return g->gr_name;
+		s = "";
+	else
+		s = g->gr_name;
+	s = atom(s);
+	strcache(&gidcache, s, gid);
+	return s;
 }
 
 char*
 uid2str(uid_t uid)
 {
+	char *s;
 	struct passwd *p;
+
+	if((s = strcachebyid(&uidcache, uid)) != nil)
+		return s;
 
 	p = getpwuid(uid);
 	if(p == nil)
-		return "";
-	return p->pw_name;
+		s = "";
+	else
+		s = p->pw_name;
+	s = atom(s);
+	strcache(&uidcache, s, uid);
+	return s;
 }
 
 gid_t
 str2gid(char *s)
 {
+	int id;
 	struct group *g;
 
+	if(strcachebystr(&gidcache, s, &id) >= 0)
+		return id;
+	
 	g = getgrnam(s);
 	if(g == nil)
-		return (gid_t)-1;
-	return g->gr_gid;
+		id = -1;
+	else
+		id = g->gr_gid;
+	strcache(&gidcache, s, id);
+	return id;
 }
 
 uid_t
 str2uid(char *s)
 {
+	int id;
 	struct passwd *p;
 
+	if(strcachebystr(&uidcache, s, &id) >= 0)
+		return id;
+	
 	p = getpwnam(s);
-	if(p==nil)
-		return (uid_t)-1;
-	return p->pw_uid;
+	if(p == nil)
+		id = -1;
+	else
+		id = p->pw_uid;
+	strcache(&uidcache, s, id);
+	return id;
 }
 
 /*
