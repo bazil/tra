@@ -1508,7 +1508,7 @@ dumpdb(Db *db, int fd)
 	a.vt = mkvtime1(name, now, time(0));
 	db->rootstat->synctime = maxvtime(db->rootstat->synctime, a.vt);
 	p = nil;
-	fprint(fd, "%P\t%$\n", p, db->rootstat);
+	fprint(fd, "%P\tlist=nil\t\tdelta='' %$\n", p, db->rootstat);
 	a.db = db;
 	a.p = p;
 	a.fd = fd;
