@@ -117,22 +117,6 @@ idtostr(Db *db, int i)
 }
 
 static char*
-dbreadbufstringdup(Db *db, Buf *b)
-{
-	int i;
-	char *s;
-
-	i = readbufc(b)<<8;
-	i |= readbufc(b);
-	if(i == 0)
-		return nil;
-	s = idtostr(db, i);
-	if(s == nil)
-		panic("db: bad string pointer %d", i);
-	return s;
-}
-
-static char*
 dbreadbufstringatom(Db *db, Buf *b)
 {
 	int i;
@@ -250,9 +234,9 @@ dbreadbufstat(Db *db, Buf *b)
 	s->ctime = dbreadbufvtime(db, b);
 
 	s->mode = readbufl(b);
-	s->uid = dbreadbufstringdup(db, b);
-	s->gid = dbreadbufstringdup(db, b);
-	s->muid = dbreadbufstringdup(db, b);
+	s->uid = dbreadbufstringatom(db, b);
+	s->gid = dbreadbufstringatom(db, b);
+	s->muid = dbreadbufstringatom(db, b);
 	s->sysmtime = readbufl(b);
 
 	s->length = readbufvl(b);
@@ -260,9 +244,9 @@ dbreadbufstat(Db *db, Buf *b)
 
 	s->localsig = readbufdatum(b);
 	s->localmode = readbufl(b);
-	s->localuid = dbreadbufstringdup(db, b);
-	s->localgid = dbreadbufstringdup(db, b);
-	s->localmuid = dbreadbufstringdup(db, b);
+	s->localuid = dbreadbufstringatom(db, b);
+	s->localgid = dbreadbufstringatom(db, b);
+	s->localmuid = dbreadbufstringatom(db, b);
 	s->localsysmtime = readbufl(b);
 
 	return s;
@@ -1391,7 +1375,6 @@ if(r<0) {fprint(2, "cannot write: %r\n"); abort(); }
 	db->s->close(db->s);
 	dbresetlog(db);
 	close(db->logfd);
-	closelistcache(db->listcache);
 	free(db);
 	return r;
 }
@@ -1409,6 +1392,7 @@ freedb(Db *db)
 	db->root->close(db->root);
 	db->rootstatblock->close(db->rootstatblock);
 	db->super->close(db->super);
+	closelistcache(db->listcache);
 	r = db->s->free(db->s);
 	dbresetlog(db);
 	close(db->logfd);
