@@ -1,0 +1,56 @@
+<$PLAN9/src/mkhdr
+
+OFILES=\
+	$SYSNAME.$O\
+	avl.$O\
+	banner.$O\
+	clist.$O\
+	clnt.$O\
+	ctime.$O\
+	dat.$O\
+	db.$O\
+	fdbuf.$O\
+	hash.$O\
+	ignore.$O\
+	list.$O\
+	mux.$O\
+	noconfig.$O\
+	path.$O\
+	queue.$O\
+	repl.$O\
+	rpc.$O\
+	sha1.$O\
+	srv.$O\
+	stat.$O\
+	storage.$O\
+	synckids.$O\
+	syncfinish.$O\
+	syncthread.$O\
+	synctriage.$O\
+	syncstat.$O\
+	time.$O\
+	unix.$O\
+	util.$O\
+	work.$O\
+
+LIB=libtra.a
+
+<$PLAN9/src/mklib
+
+SHORTLIB=thread bio 9
+
+$O.%: %.$O $LIB libzlib/libzlib.a ${SHORTLIB:%=$LIBDIR/lib%.a}
+	$LD $LDFLAGS -o $target $prereq
+
+$O.tradump $O.trafixdb: noclist.$O
+
+test:V: $O.tramkdb $O.tra $O.trasrv $O.tradump
+	TRASRV=./o.trasrv
+	TRAMKDB=./o.tramkdb
+	TRADUMP=./o.tradump
+	TRASCAN=./o.trascan
+	TRATMP=/tmp/tratest
+	SYNC=./o.tra
+	export TRASRV TRAMKDB TRADUMP TRASCAN TRATMP SYNC
+	rc ../testfn.rc ../test/*
+

@@ -1,0 +1,22 @@
+<$PLAN9/src/mkhdr
+
+OFILES=\
+	adler32.$O\
+	crc32.$O\
+	deflate.$O\
+	infblock.$O\
+	infcodes.$O\
+	inffast.$O\
+	inflate.$O\
+	inftrees.$O\
+	infutil.$O\
+	trazlib.$O\
+	trees.$O\
+	zutil.$O\
+
+LIB=libzlib.a
+
+<$PLAN9/src/mklib
+
+CFLAGS=$CFLAGS -I.. -p -DPLAN9
+
