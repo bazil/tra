@@ -101,11 +101,12 @@ rpchashfile(Replica *repl, int fd)
 
 	hl = mkhashlist();
 	off = 0;
-	buf = emalloc(IOCHUNK);
+	buf = emallocnz(IOCHUNK);
 	while((n = rpcreadhash(repl, fd, buf, IOCHUNK)) > 0){
 		if(n % (2+SHA1dlen)){
 			werrstr("got bad readhash count %d", n);
 			free(hl);
+			free(buf);
 			return nil;
 		}
 		for(i=0; i<n; i+=2+SHA1dlen){
@@ -113,6 +114,7 @@ rpchashfile(Replica *repl, int fd)
 			off += SHORT(buf+i);
 		}
 	}
+	free(buf);
 	if(n < 0){
 		free(hl);
 		return nil;

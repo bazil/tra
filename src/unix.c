@@ -408,7 +408,7 @@ sysstat(char *tpath, Stat *s, int recordchanges, Sysstat *ss)
 		dqid.a = mksig(&d, &dqid.n);
 		if(s->length != d.st_size /* || config("paranoid") */
 		|| datumcmp(&dqid, &s->localsig) != 0){
-if(1)			fprint(2, "shafile %s length %lud %lud datum %d/%.*H %d/%.*H\n",
+if(0)			fprint(2, "shafile %s length %lud %lud datum %d/%.*H %d/%.*H\n",
 				tpath, (ulong)s->length, (ulong)d.st_size,
 				(int)s->localsig.n,
 				(int)s->localsig.n, s->localsig.a, (int)dqid.n, (int)dqid.n, dqid.a);

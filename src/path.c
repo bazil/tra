@@ -51,6 +51,7 @@ readbufpath(Buf *b)
 {
 	int i, n;
 	Path *p;
+	char *s;
 
 	if(readbufc(b) != 0)
 		longjmp(b->jmp, BufData);
@@ -60,7 +61,7 @@ readbufpath(Buf *b)
 	for(i=0; i<n; i++){
 		if(p)
 			p->ref--;
-		p = mkpath(p, readbufstringdup(b));
+		p = mkpath(p, readbufstring(b));
 	}
 	setmalloctag(p, getcallerpc(&b));
 	return p;

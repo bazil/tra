@@ -1,7 +1,21 @@
 <$PLAN9/src/mkhdr
 
+TARG=\
+	tra\
+	trafixdb\
+	tramkdb\
+	trasrv\
+	trascan\
+	tradump\
+	trafixdb\
+
+PROGS=${TARG:%=$O.%}
+
+all:V: $PROGS
+
 OFILES=\
 	$SYSNAME.$O\
+	atom.$O\
 	avl.$O\
 	banner.$O\
 	clist.$O\
@@ -18,10 +32,10 @@ OFILES=\
 	queue.$O\
 	repl.$O\
 	rpc.$O\
-	sha1.$O\
 	srv.$O\
 	stat.$O\
 	storage.$O\
+	strcache.$O\
 	synckids.$O\
 	syncfinish.$O\
 	syncthread.$O\
@@ -36,20 +50,15 @@ LIB=libtra.a
 
 <$PLAN9/src/mklib
 
-SHORTLIB=thread bio 9
-
-TARG=\
-	tra\
-	trafixdb\
-	tramkdb\
-	trasrv\
-	trascan\
-	tradump\
-	trafixdb\
-
-PROGS=${TARG:%=$O.%}
+SHORTLIB=sec thread bio 9
 
 all:V: $PROGS
+
+install:V: $PROGS
+	for i in $TARG
+	do
+		cp $O.$i $BIN/$i
+	done
 
 nuke:V: nuke-common 
 	(cd libzlib ; mk nuke)

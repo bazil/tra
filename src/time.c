@@ -21,12 +21,6 @@ _mkvtime(int m)
 static void
 freevltime(Ltime *l, int nl)
 {
-	int i;
-
-	for(i=0; i<nl; i++){
-		free(l[i].m);
-		l[i].m = (char*)0xDeadbeef;
-	}
 	free(l);
 }
 
@@ -48,7 +42,7 @@ mkvtime1(char *m, ulong t, ulong wall)
 	v = emalloc(sizeof *v);
 	v->l = emalloc(sizeof(v->l[0]));
 	v->nl = 1;
-	v->l[0].m = estrdup(m);
+	v->l[0].m = atom(m);
 	v->l[0].t = t;
 	v->l[0].wall = wall;
 	setmalloctag(v, getcallerpc(&m));
@@ -75,20 +69,17 @@ isinfvtime(Vtime *a)
 Vtime*
 copyvtime(Vtime *a)
 {
-	int i;
+	int i, n;
 	Vtime *b;
 
 	if(isinfvtime(a))
 		b = infvtime();
 	else{
 		b = mkvtime();
-		b->l = emalloc(a->nl*sizeof(b->l[0]));
+		n = a->nl*sizeof(a->l[0]);
+		b->l = emallocnz(n);
 		b->nl = a->nl;
-		for(i=0; i<b->nl; i++){
-			b->l[i].m = estrdup(a->l[i].m);
-			b->l[i].t = a->l[i].t;
-			b->l[i].wall = a->l[i].wall;
-		}
+		memmove(b->l, a->l, n);
 	}
 	setmalloctag(b, getcallerpc(&a));
 	return b;
@@ -180,28 +171,19 @@ maxvtime(Vtime *a, Vtime *b)
 	k=0;
 	for(i=0; i<a->nl; i++){
 		while(j < b->nl && strcmp(a->l[i].m, b->l[j].m) > 0){
-			c[k].m = estrdup(b->l[j].m);
-			c[k].t = b->l[j].t;
-			c[k].wall = b->l[j].wall;
+			c[k] = b->l[j];
 			j++, k++;
 		}
 
-		c[k].m = estrdup(a->l[i].m);
-		c[k].t = a->l[i].t;
-		c[k].wall = a->l[i].wall;
+		c[k] = a->l[i];
 		if(j < b->nl && strcmp(a->l[i].m, b->l[j].m) == 0){
-			if(c[k].t < b->l[j].t){
-				c[k].t = b->l[j].t;
-				c[k].wall = b->l[j].wall;
-			}
+			c[k] = b->l[j];
 			j++;
 		}
 		k++;
 	}
 	for(; j<b->nl; j++){
-		c[k].m = estrdup(b->l[j].m);
-		c[k].t = b->l[j].t;
-		c[k].wall = b->l[j].wall;
+		c[k] = b->l[j];
 		k++;
 	}
 	assert(kk==k);
@@ -244,7 +226,6 @@ unmaxvtime(Vtime *a, Vtime *b)
 			wi++;
 		}else{
 			/* b will take care of this entry, drop it */
-			free(a->l[ri].m);
 			a->l[ri].m = nil;
 		}
 	}
@@ -288,13 +269,9 @@ minvtime(Vtime *a, Vtime *b)
 		while(j < b->nl && strcmp(a->l[i].m, b->l[j].m) > 0)
 			j++;
 		if(j < b->nl && strcmp(a->l[i].m, b->l[j].m) == 0){
-			c[k].m = estrdup(a->l[i].m);
-			c[k].t = a->l[i].t;
-			c[k].wall = a->l[i].wall;
-			if(c[k].t > b->l[j].t){
-				c[k].t = b->l[j].t;
-				c[k].wall = b->l[j].wall;
-			}
+			c[k] = a->l[i];
+			if(c[k].t > b->l[j].t)
+				c[k] = b->l[j];
 			j++;
 			k++;
 		}

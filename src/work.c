@@ -27,8 +27,8 @@ workthread(void *a)
 
 	threadsetname("workthread");
 	q = a;
-	subq = mkqueue("subq", 32);
-	for(i=0; i<32; i++)
+	subq = mkqueue("subq", 128);
+	for(i=0; i<128; i++)
 		spawn(workthread0, subq);
 
 	while((s = qrecv(q)) != nil)
@@ -171,7 +171,7 @@ copyfile(Syncpath *s, Replica *rf, Stat *sf, Replica *rt, Stat *st)
 	 * TODO: run rpchashfile calls in parallel?
 	 * TODO: overlap reads and writes in copybytes?
 	 */
-	buf = emalloc(IOCHUNK);
+	buf = emallocnz(IOCHUNK);
 	if((hlf = rpchashfile(rf, fdf)) == nil){
 		hlf = mkhashlist();
 		hlf = addhash(hlf, sf->sha1, 0, sf->length);

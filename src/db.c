@@ -1004,7 +1004,7 @@ fprint(2, "log delmeta %s\n", k);
 				for(i=0; i<ne; i++)
 					e[i] = readbufstring(b);
 				s = readbufstat(b);
-{
+if(0){
 Path *p;
 p=nil;
 for(i=ne-1; i>=0; i--)

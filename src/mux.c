@@ -66,6 +66,15 @@ clientrpc(Replica *repl, Rpc *r)
 		repl->muxer = 1;
 		while(!cli->b){
 			qunlock(&repl->lk);
+			/*
+			 * XXX There must be a better way to do this.
+			 * We want to wait to flush the output buffer
+			 * until all the other threads finish generating
+			 * requests.  There are at most two mux readers -- one for
+			 * each trasrv -- hence the test here.
+			 */
+			while(yield() >= 2)
+				;
 			threadstate("replread %R", r);
 			if((b = replread(repl)) == nil){
 				rerrstr(cli->err, sizeof cli->err);

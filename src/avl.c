@@ -1,6 +1,8 @@
 #include "tra.h"
 #include "avl.h"
 
+int lookupavls, dcinsertavls, dcdeleteavls, dclookupavls;
+
 /*
  * In-memory database stored as self-balancing AVL tree.
  * See Lewis & Denenberg, Data Structures and Their Algorithms.
@@ -107,6 +109,7 @@ _insertavl(Avl **tp, Avl *p, Avl *r, int (*cmp)(Avl*,Avl*), Avl **rfree)
 		return 1;
 	}
 	ob = (*tp)->bal;
+dcinsertavls++;
 	if((i=cmp(r, *tp)) != 0){
 		(*tp)->bal += i*_insertavl(&(*tp)->n[(i+1)/2], *tp, r, cmp, rfree);
 		balance(tp, p);
@@ -131,9 +134,11 @@ _lookupavl(Avl *t, Avl *r, int (*cmp)(Avl*,Avl*))
 	int i;
 	Avl *p;
 
+lookupavls++;
 	p = nil;
 	while(t != nil){
 		assert(t->p == p);
+dclookupavls++;
 		if((i=cmp(r, t))==0)
 			return t;
 		p = t;
@@ -170,6 +175,7 @@ _deleteavl(Avl **tp, Avl *p, Avl *rx, int(*cmp)(Avl*,Avl*), Avl **del, void (*pr
 		return 0;
 
 	ob = (*tp)->bal;
+dcdeleteavls++;
 	if((i=cmp(rx, *tp)) != 0){
 		(*tp)->bal += i*_deleteavl(&(*tp)->n[(i+1)/2], *tp, rx, cmp, del, predel, arg);
 		balance(tp, p);

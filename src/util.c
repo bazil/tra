@@ -27,6 +27,21 @@ emalloc(ulong n)
 }
 
 void*
+emallocnz(ulong n)
+{
+	void *v;
+
+	if(n > 1024*1024*1024)
+		abort();
+	v = mallocz(n, 0);
+	if(v == nil)
+		sysfatal("out of memory: emallocnz(%ld), 0x%lx",
+			 n, getcallerpc(&v));
+	setmalloctag(v, getcallerpc(&n));
+	return v;
+}
+
+void*
 erealloc(void *v, ulong n)
 {
 	v = realloc(v, n);
@@ -38,15 +53,20 @@ erealloc(void *v, ulong n)
 }
 
 char*
-estrdup(char *s)
+estrdup(char *os)
 {
-	if(s == nil)
+	ulong pc;
+	char *s;
+
+	if(os == nil)
 		return nil;
-	s = strdup(s);
-	setmalloctag(s, getcallerpc(&s));
+	s = emalloc(strlen(os)+1);
+	strcpy(s, os);
 	if(s == nil)
 		sysfatal("out of memory: estrdup(%s), %lux",
 			 s, getcallerpc(&s));
+	pc = getcallerpc(&s);
+	setmalloctag(s, pc);
 	return s;
 }
 

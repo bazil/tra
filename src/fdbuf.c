@@ -2,7 +2,7 @@
 
 enum
 {
-	FdSize = 1<<12,
+	FdSize = 128*1024,
 };
 
 struct Fd
@@ -96,6 +96,12 @@ twrite(Fd *f, void *av, int n)
 	}
 
 	return t;
+}
+
+int
+tcanread(Fd *f)
+{
+	return f->rmax - f->roff;
 }
 
 int

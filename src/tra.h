@@ -2,9 +2,20 @@
 #include <sys/stat.h>
 #include <libc.h>
 #include <bio.h>
+#include <libsec.h>
 #include <thread.h>
 #include "storage.h"
 #include "libzlib/trazlib.h"
+/*
+ * For compatibility, the Unix port of the Plan 9 libraries
+ * save the signal mask, so that you can longjmp from
+ * inside a note handler.  (Arguably this should be done
+ * by having notejmp zero the signal mask rather than
+ * requiring setjmp to save it.)  In any case, this makes
+ * setjmp much cheaper.  We setjmp a lot. 
+ */
+#undef p9setjmp
+#define p9setjmp(b)	sigsetjmp((void*)(b), 0)
 
 ulong	stat2mode(char*, struct stat*);
 ulong	trasetmode(char*, ulong, ulong);
@@ -23,8 +34,6 @@ typedef struct Apath		Apath;
 typedef struct Buf		Buf;
 typedef struct Client		Client;
 typedef struct Db		Db;
-typedef struct DigestState	DigestState;
-typedef struct DigestState SHA1state;
 typedef struct Fid		Fid;
 typedef struct Fd 	Fd;
 typedef struct Hash		Hash;
@@ -36,6 +45,8 @@ typedef struct Path		Path;
 typedef struct Replica	Replica;
 typedef struct Rpc		Rpc;
 typedef struct Stat		Stat;
+typedef struct Str		Str;
+typedef struct Strcache	Strcache;
 typedef struct Sync		Sync;
 typedef struct Syncpath	Syncpath;
 typedef struct Sysstat	Sysstat;
@@ -44,7 +55,7 @@ typedef struct Vtime		Vtime;
 
 enum
 {
-	IOCHUNK = 1<<14,
+	IOCHUNK = 64*1024,
 
 	/*
 	 * we want to avoid interpreting text as a size
@@ -95,6 +106,20 @@ struct Buf
 	jmp_buf jmp;
 };
 
+/*
+ * string <-> id maps
+ */
+struct Str
+{
+	char *s;
+	uint id;
+};
+struct Strcache
+{
+	int n;
+	Str cache[4093];
+};
+
 struct Db
 {
 	u32int addr;
@@ -102,6 +127,7 @@ struct Db
 	DStore *s;
 	DMap *root;
 	DMap *meta;
+	Strcache strcache;
 	DMap *strtoid;
 	DMap *idtostr;
 	Stat *rootstat;
@@ -115,20 +141,6 @@ struct Db
 	int ignwr;
 	int alwaysflush;
 	Listcache *listcache;
-};
-
-struct DigestState
-{
-	ulong len;
-	u32int state[5];
-	uchar buf[128];
-	int blen;
-	char malloced;
-	char seeded;
-};
-enum
-{
-	SHA1dlen = 20
 };
 
 struct Fid 
@@ -445,6 +457,7 @@ extern	int	oneway;
 
 void		_coverage(char*, int);
 Hashlist*	addhash(Hashlist*, uchar*, vlong, vlong);
+char*	atom(char*);
 int		banner(Replica*, char*);
 int		clientrpc(Replica*, Rpc*);
 int		closedb(Db*);
@@ -473,6 +486,7 @@ Replica*	dialreplica(char*);
 Replica*	_dialreplica(char*);
 void		dumpdb(Db*, int);
 void*		emalloc(ulong);
+void*		emallocnz(ulong);
 void		endclient(void);
 void*		erealloc(void*, ulong);
 char*		esmprint(char*, ...);
@@ -481,6 +495,7 @@ Replica*	fd2replica(int, int);
 Hash*		findhash(Hashlist*, uchar*);
 Apath*		flattenpath(Path*);
 int		flushdb(Db*);
+void		flushstrcache(Strcache*);
 void		freekids(Kid*, int);
 void		freepath(Path*);
 void		freestat(Stat*);
@@ -563,10 +578,12 @@ long		rpcwrite(Replica*, int, void*, long);
 long		rpcwritehash(Replica*, int, void*, long);
 int		rpcwstat(Replica*, Path*, Stat*);
 void		run(char*[], int*, int*);
-DigestState*	sha1(uchar*, ulong, uchar*, DigestState*);
 void		spawn(void (*fn)(void*), void *arg);
 void		startclient(void);
 int		statfmt(Fmt*);
+void		strcache(Strcache*, char*, int);
+char*	strcachebyid(Strcache*, int);
+int		strcachebystr(Strcache*, char*, int*);
 Path*	strtopath(char*);
 void		synccleanup(Syncpath*);
 void		syncfinish(Syncpath*);
@@ -598,6 +615,7 @@ Fd*		topen(int);
 int		tramkwriteable(Fid*, char*);
 char*		trapath(char*);
 void			traversion(void);
+int		tcanread(Fd*);
 int		tread(Fd*, void*, int);
 int		treadn(Fd*, void*, int);
 int		twrite(Fd*, void*, int);

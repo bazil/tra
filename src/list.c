@@ -239,6 +239,7 @@ freelistpage(DListpage *dir)
 	free(dir);
 }
 
+int dclistlookups;
 static int
 listlookup(DMap *map, Datum *key, Datum *val)
 {
@@ -253,9 +254,17 @@ listlookup(DMap *map, Datum *key, Datum *val)
 		if(dir == nil)
 			return -1;
 		for(i=0; i<dir->hdr.n; i++){
+dclistlookups++;
 			switch(datumcmp(&dir->de[i].key, key)){
 			case 0:
 				n = dir->de[i].val.n;
+/* RSC 
+				if(val->n == 0 && val->a == nil){
+					val->n = n;
+					val->a = emallocnz(n+1);
+					((char*)val->a)[n] = 0;
+				}
+*/
 				if(n > val->n)
 					n = val->n;
 				if(n > 0)
@@ -298,6 +307,7 @@ mklistpage(DList *list)
 	return dir;
 }
 
+int dclistadd1s;
 static void
 listadd1(DListpage *dir, Datum *key, Datum *val)
 {
@@ -307,9 +317,11 @@ listadd1(DListpage *dir, Datum *key, Datum *val)
 	sz = BLOCKSIZE(key->n, val->n);
 	if(sz > dir->free)
 		abort();
-	for(i=0; i<dir->hdr.n; i++)
+	for(i=0; i<dir->hdr.n; i++){
+dclistadd1s++;
 		if(datumcmp(&dir->de[i].key, key) > 0)
 			break;
+	}
 	if(i<dir->hdr.n){
 		memmove(dir->de[i].bp+sz, dir->de[i].bp, dir->end - dir->de[i].bp);
 		p = dir->de[i].bp;
@@ -326,6 +338,8 @@ listadd1(DListpage *dir, Datum *key, Datum *val)
 	PSHORT(dir->hdr.np, dir->hdr.n);
 	dir->dat->flags |= DDirty;
 }
+
+int dclistinserts;
 
 static int
 listinsert(DMap *map, Datum *key, Datum *val, int action)
@@ -373,6 +387,7 @@ listinsert(DMap *map, Datum *key, Datum *val, int action)
 		// fprint(2, "prev %ux next %ux...", dir->hdr.prev, dir->hdr.next);
 		for(i=0; i<dir->hdr.n; i++){
 			// fprint(2, "%s...", (char*)dir->de[i].key.a);
+dclistinserts++;
 			switch(datumcmp(&dir->de[i].key, key)){
 			case 0:
 				if(!(action&DMapReplace)){

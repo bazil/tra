@@ -1,6 +1,8 @@
 #include "tra.h"
 #include "avl.h"
 
+int cmaplookups, cmapinserts;
+
 /*
  * Avoid unsightly O(n^2) behavior in on-disk list insertions by keeping 
  * the in-memory version in a balanced tree.  This means reading
@@ -71,6 +73,7 @@ cmapinsert(DMap *m, Datum *k, Datum *v, int flag)
 
 	dbg(DbgCache, "cinsert %.*s %.*H\n", (int)utfnlen((char*)k->a, k->n), (char*)k->a, v->n, v->a);
 
+cmapinserts++;
 	c = map2clist(m);
 	ek.k = *k;
 	if((a = lookupavl(c->tree, e2a(&ek))) != nil){
@@ -81,7 +84,7 @@ cmapinsert(DMap *m, Datum *k, Datum *v, int flag)
 		c->dirty = 1;
 		e = (Entry*)a;
 		free(e->v.a);
-		e->v.a = emalloc(v->n);
+		e->v.a = emallocnz(v->n);
 		e->v.n = v->n;
 		memmove(e->v.a, v->a, v->n);
 		return 0;
@@ -95,7 +98,7 @@ cmapinsert(DMap *m, Datum *k, Datum *v, int flag)
 		e->k.a = emalloc(k->n);
 		e->k.n = k->n;
 		memmove(e->k.a, k->a, k->n);
-		e->v.a = emalloc(v->n);
+		e->v.a = emallocnz(v->n);
 		e->v.n = v->n;
 		memmove(e->v.a, v->a, v->n);
 		ep = nil;
@@ -114,6 +117,7 @@ cmaplookup(DMap *m, Datum *k, Datum *v)
 	Entry ek, *e;
 	int n;
 
+cmaplookups++;
 	c = map2clist(m);
 	ek.k = *k;
 	if((a = lookupavl(c->tree, e2a(&ek))) == nil){
@@ -122,6 +126,13 @@ cmaplookup(DMap *m, Datum *k, Datum *v)
 	}
 	e = (Entry*)a;
 	n = e->v.n;
+/* RSC
+	if(v->n == 0 && v->a == nil){
+		v->n = n;
+		v->a = emallocnz(n+1);
+		((char*)v->a)[n] = 0;
+	}
+*/
 	if(n > v->n)
 		n = v->n;
 	if(n > 0)
@@ -285,6 +296,7 @@ cmapfill(void *a, Datum *k, Datum *v)
 	}
 }
 
+int dcentrycmps;
 static int
 entrycmp(Avl *a, Avl *b)
 {
@@ -293,6 +305,7 @@ entrycmp(Avl *a, Avl *b)
 	ea = (Entry*)a;
 	eb = (Entry*)b;
 
+dcentrycmps++;
 	/* keep avl sorted backwards so list insertion during flush is fast */
 	return -datumcmp(&ea->k, &eb->k);
 }
