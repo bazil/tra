@@ -158,6 +158,7 @@ syskids(char *tpath, Sysstat ***pk, Sysstat *ss)
 	sl = 0;
 	s = nil;
 	while((de = readdir(d)) != nil){
+		/* skip . and .. */
 		if(de->d_name[0]=='.' &&
 		   (de->d_name[1]=='\0' ||
 		    (de->d_name[1]=='.' && de->d_name[2]=='\0')))
@@ -205,7 +206,7 @@ syscommit(Fid *fid)
 	if((wfd = creat(fid->tpath, 0666)) < 0)
 		return -1;
 
-	buf = emalloc(IOCHUNK);
+	buf = emallocnz(IOCHUNK);
 	if(seek(fid->fd, 0, 0) < 0)
 		abort();
 	while((n = read(fid->fd, buf, IOCHUNK)) > 0){
@@ -241,7 +242,7 @@ shafile(uchar d[20], char *file)
 	if((fd = open(file, OREAD)) < 0)
 		return -1;
 
-	buf = emalloc(IOCHUNK);
+	buf = emallocnz(IOCHUNK);
 	s = nil;
 	while((n = read(fd, buf, IOCHUNK)) > 0)
 		s = sha1(buf, n, nil, s);
@@ -389,7 +390,6 @@ sysstat(char *tpath, Stat *s, int recordchanges, Sysstat *ss)
 	 * start setting them, having the localuids keeps us from
 	 * thinking that they've all changed all of a sudden.
 	 */
-
 	p = s->localmode;
 	if(p == ~0)
 		p = 0;
@@ -405,20 +405,16 @@ sysstat(char *tpath, Stat *s, int recordchanges, Sysstat *ss)
 	}
 
 	if(s->localuid==nil || strcmp(s->localuid, duid) != 0){
-		free(s->localuid);
 		s->localuid = estrdup(duid);
 		if(recordchanges && config("setuid")){
-			free(s->uid);
 			s->uid = estrdup(s->localuid);
 			changed = 1;
 		}
 	}
 
 	if(s->localgid==nil || strcmp(s->localgid, dgid) != 0){
-		free(s->localgid);
 		s->localgid = estrdup(dgid);
 		if(recordchanges && config("setgid")){
-			free(s->gid);
 			s->gid = estrdup(s->localgid);
 			changed = 1;
 		}
@@ -461,7 +457,6 @@ if(0)			fprint(2, "shafile %s length %lud %lud datum %d/%.*H %d/%.*H\n",
 	 */
 
 	if(contentschanged){
-		free(s->muid);
 		s->muid = estrdup(dmuid);
 	}
 
@@ -505,11 +500,9 @@ syswstat(char *tpath, Stat *s, Stat *t)
 		if(config("setuid")){
 			if((u=str2uid(t->uid))!=(uid_t)-1 
 			&& chown(tpath, u, (gid_t)-1)>=0){
-				free(s->localuid);
 				s->localuid = estrdup(t->uid);
 			}
 		}
-		free(s->uid);
 		s->uid = estrdup(t->uid);
 		changed = 1;
 	}
@@ -519,11 +512,9 @@ syswstat(char *tpath, Stat *s, Stat *t)
 		if(config("setgid")){
 			if((g=str2gid(t->gid))!=(gid_t)-1
 			&& chown(tpath, (uid_t)-1, g)>=0){
-				free(s->localgid);
 				s->localgid = estrdup(t->gid);
 			}
 		}
-		free(s->gid);
 		s->gid = estrdup(t->gid);
 		changed = 1;
 	}
@@ -558,7 +549,6 @@ syswstat(char *tpath, Stat *s, Stat *t)
 	}
 
 	if(contentschanged){
-		free(s->muid);
 		s->muid = estrdup(t->muid);
 	}
 

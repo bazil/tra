@@ -114,9 +114,9 @@ readbufstat(Buf *b)
 	s->ctime = readbufvtime(b);
 
 	s->mode = readbufl(b);
-	s->uid = readbufstringdup(b);
-	s->gid = readbufstringdup(b);
-	s->muid = readbufstringdup(b);
+	s->uid = readbufstringatom(b);
+	s->gid = readbufstringatom(b);
+	s->muid = readbufstringatom(b);
 	s->sysmtime = readbufl(b);
 
 	s->length = readbufvl(b);
@@ -124,9 +124,9 @@ readbufstat(Buf *b)
 
 	s->localsig = readbufdatum(b);
 	s->localmode = readbufl(b);
-	s->localuid = readbufstringdup(b);
-	s->localgid = readbufstringdup(b);
-	s->localmuid = readbufstringdup(b);
+	s->localuid = readbufstringatom(b);
+	s->localgid = readbufstringatom(b);
+	s->localmuid = readbufstringatom(b);
 	s->localsysmtime = readbufl(b);
 
 	return s;
