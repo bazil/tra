@@ -33,20 +33,45 @@ trapath(char *name)
 
 	home = getenv("HOME");
 	if(home == nil)
-		sysfatal("cannot read user name");
+		sysfatal("cannot read $HOME");
 
 	return esmprint("%s/.tra/%s", home, name);
+}
+
+char**
+doauto(char *name)
+{
+	static char *argv[10], **argp;
+	char *gnot;
+
+	argp = argv;
+	gnot = sysname();
+	if(strcmp(name, "localhost") != 0
+	&& strcmp(name, "local") != 0
+	&& (gnot==nil || strcmp(name, gnot) != 0)){
+		*argp++ = "ssh";
+		*argp++ = "-X";
+		*argp++ = "-C";
+		*argp++ = name;
+	}
+	*argp++ = "trasrv";
+	*argp++ = "-a";
+	*argp++ = nil;
+	return argv;
 }
 
 Replica*
 _dialreplica(char *name)
 {
-	char *bin;
+	char *bin, **argv, err[ERRMAX];
 	int p[2], q[2], i;
 
 	bin = trapath(name);
-	if(access(bin, 1) < 0)
-		sysfatal("access %s: %r", bin);
+	argv = nil;
+	if(access(bin, AEXEC) < 0){
+		rerrstr(err, sizeof err);
+		argv = doauto(name);
+	}
 
 	if(pipe(p) < 0 || pipe(q) < 0)
 		sysfatal("pipe: %r");
@@ -67,8 +92,11 @@ _dialreplica(char *name)
 		 */
 		for(i=3; i<20; i++)
 			close(i);
-		execl(bin, name, nil);
-		sysfatal("exec %s: %r", bin);
+		if(argv)
+			execvp(argv[0], argv);
+		else
+			execl(bin, name, nil);
+		sysfatal("exec %s: %r", argv ? argv[0] : bin);
 
 	default:
 		close(q[0]);

@@ -556,6 +556,7 @@ srvcommit(Srv *srv, int fidnum, Stat *t)
 	freevtime(s->mtime);
 	s->mtime = copyvtime(t->mtime);
 	s->synctime = maxvtime(s->synctime, t->synctime);
+	sysstat(fid->tpath, s, 1, nil);
 	syswstat(fid->tpath, s, t);
 	dbputstat(srv->db, fid->ap->e, fid->ap->n, s);
 	free(fid->ap);
@@ -901,6 +902,7 @@ threadmain(int argc, char **argv)
 	dbfile = argv[0];
 	root = argv[1];
 	srv = opensrv(dbfile);
+	fprint(2, "# %V\n", srv->now);
 	srv->root = root;
 	dbgname = srv->name;
 	argv0 = dbgname;

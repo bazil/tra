@@ -208,7 +208,7 @@ resolvethread(void *v)
 				s->action = s->triage|1;
 			else if(res == 'b')
 				s->action = s->triage&~1;
-			else if(res == 'm' && s->a.s->mtime && s->b.s->mtime==0
+			else if(res == 'm' && s->a.s->mtime && s->b.s->mtime
 			&& s->a.s->mtime != s->b.s->mtime){
 				if(s->a.s->mtime > s->b.s->mtime)
 					s->action = s->triage|1;

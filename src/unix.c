@@ -444,10 +444,10 @@ if(0)			fprint(2, "shafile %s length %lud %lud datum %d/%.*H %d/%.*H\n",
 			s->localsig = dqid;
 			dqid.a = nil;
 			shafile(sha, tpath);
+			changed = 1;
 			if(s->length != d.st_size || memcmp(s->sha1, sha, 20) != 0){
 				memmove(s->sha1, sha, 20);
 				s->length = d.st_size;
-				changed = 1;
 				contentschanged = 1;
 			}
 		}

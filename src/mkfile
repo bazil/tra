@@ -49,7 +49,7 @@ OFILES=\
 HFILES=tra.h
 
 LIB=libtra.a
-
+BIN=/usr/local/bin
 <$PLAN9/src/mklib
 
 SHORTLIB=sec thread bio 9
