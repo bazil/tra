@@ -1,0 +1,153 @@
+#!/bin/rc
+
+rfork e
+
+nl='
+'
+
+if(~ $#TRASRV 0)
+	TRASRV=(python srv.py)
+if(~ $#SYNC 0)
+	SYNC=(python textui.py)
+if(~ $#TRADUMP 0)
+	TRADUMP=(python dumpdb.py)
+if(~ $#TRAMKDB 0)
+	TRAMKDB=(python tramkdb)
+
+tmp=/tmp/tratest
+
+fn die {
+	echo $* : $status>[1=2]
+	exit die
+}
+
+fn usage {
+	echo usage: $1 >[1=2]
+	exit usage
+}
+
+fn replica {
+	if(~ $tmp '' || ~ `{cleanname $tmp} /) die not going to remove slash
+	/bin/rm -r $tmp/*
+	for(i){
+		/bin/mkdir $tmp/$i || die
+		$TRAMKDB $tmp/$i.db sysname owner descr proto || die
+		{
+			echo '#!/bin/rc'
+			echo $TRASRV '$*' -r $tmp/$i $tmp/$i.db # $tmp/$i.proto
+		} >$tmp/$i.s || die
+		chmod +x $tmp/$i.s || die replica $i
+	}
+}
+
+fn proto {
+	if(! ~ $#* 2)
+		usage 'mount replica proto-addition'
+	if(test -f $tmp/$1.emptyproto)
+		/bin/rm -f $tmp/$1.emptyproto $tmp/$1.proto
+	echo $2 >>$tmp/$1.proto || die proto $1
+}
+
+fn sync {
+	flags=()
+	if(~ $1 -*){
+		flags=$1
+		shift
+	}
+	if(! ~ $#* 2 3)
+		usage 'sync [-flags] from to [path]'
+
+	@{
+		rfork e
+		fn rm
+		fn mkdir
+		$SYNC $flags $tmp/$1.s $tmp/$2.s $3 || die sync $1 $2 $3
+	}
+}
+
+fn change {
+	if(! ~ $#* 2 || ! ~ $1 */*)
+		usage 'create replica/path contents'
+
+	test -f $tmp/$1 || die change non-file $1
+	echo $2 >$tmp/$1 || die change $1
+}
+
+fn create {
+	if(! ~ $#* 2 || ! ~ $1 */*)
+		usage 'create replica/path contents'
+
+	test ! -e $tmp/$1 || die create extant file $1
+	echo $2 >$tmp/$1 || die create $1
+}
+
+fn mkdir {
+	if(! ~ $#* 1 || ! ~ $1 */*)
+		usage 'mkdir replica/path'
+
+	/bin/mkdir $tmp/$1 || die mkdir $1
+}
+
+fn isfile {
+	if(! ~ $#* 1 2 || ! ~ $1 */*)
+		usage 'isfile replica/path [contents]'
+
+	test -f $tmp/$1 || die isfile $1
+	if(~ $#* 2)
+		cmp $tmp/$1 <{echo $2} || die isfile $1 $2
+}
+
+fn isdir {
+	if(! ~ $#* 1 || ! ~ $1 */*)
+		usage 'isfile replica/path'
+
+	test -d $tmp/$1 || die isdir $1
+}
+
+fn isnot {
+	if(! ~ $#* 1 || ! ~ $1 */*)
+		usage 'isfile replica/path'
+
+	test ! -e $tmp/$1 || die isnot $1
+}
+
+fn rm {
+	if(! ~ $#* 1 || ! ~ $1 */*)
+		usage 'rm replica/path'
+
+	test -e $tmp/$1 || die rm $1: nonexist
+	/bin/rm -f $tmp/$1
+}
+
+fn x {
+	echo '***' $* 
+}
+
+fn dump {
+	if(! ~ $#* 1 || ~ $1 */*)
+		usage 'dump replica'
+
+	echo '______________' db $1 '________________'
+	$TRADUMP $tmp/$1.db
+	echo '____________________________________'
+}
+
+# fn scan {
+# 	if(! ~ $#* 1 || ~ $1 */*)
+# 		usage 'scan replica'
+# 
+# 	echo 'Tscan /' | $tmp/$1.s -t >/dev/null
+# }
+
+fn run {
+	for(i){
+		echo $i
+		. $i
+	}
+}
+
+if(~ $#* 0)
+	prompt=('TRATEST: ' '	') exec rc -i
+for(i)
+	run $i
+
