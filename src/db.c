@@ -1468,8 +1468,9 @@ dumpwalk(void *v, Datum *key, Datum *val)
 	free(name);
 	s = dbparsestat(a.db, (uchar*)val->a+4, val->n-4);
 	addr = LONG((uchar*)val->a);
+	fprint(a.fd, "%P\tlist=%ux\t\tdelta=%V", a.p, addr, s->synctime);
 	s->synctime = maxvtime(s->synctime, a.vt);
-	fprint(a.fd, "%P\tlist=%ux\t\t%$\n", a.p, addr, s);
+	fprint(a.fd, " %$\n", s);
 	a.vt = s->synctime;
 	if(addr != 0){
 		m = dmapclist(a.db->listcache, a.db->s, addr, 0);
