@@ -31,7 +31,7 @@ fn replica {
 	/bin/rm -r $tmp/*
 	for(i){
 		/bin/mkdir $tmp/$i || die
-		$TRAMKDB $tmp/$i.db sysname owner descr proto || die
+		$TRAMKDB -R $tmp/$i.db $i owner descr proto || die
 		{
 			echo '#!/bin/rc'
 			echo $TRASRV '$*' -r $tmp/$i $tmp/$i.db # $tmp/$i.proto
