@@ -1,6 +1,6 @@
 #!/bin/rc
 
-rfork e
+#rfork e
 
 nl='
 '
@@ -16,6 +16,8 @@ fn usage {
 }
 
 
+if(test -f testsetup)
+	. testsetup
 if(~ $#TRASRV 0)
 	TRASRV=(8.trasrv)
 if(~ $#SYNC 0)
@@ -41,7 +43,7 @@ fn replica {
 	for(i){
 		/bin/mkdir $TRATMP/$i || die
 		echo tramkdb... >[1=2]
-		$TRAMKDB -R $TRATMP/$i.db $i owner descr proto || die
+		$TRAMKDB -R $TRATMP/$i.db $i || die
 		{
 			echo '#!'$SHELL
 			echo $TRASRV '$*' -r $TRATMP/$i $TRATMP/$i.db # $TRATMP/$i.proto
@@ -68,7 +70,7 @@ fn sync {
 		usage 'sync [-flags] from to [path]'
 
 	@{
-		rfork e
+#		rfork e
 		fn rm
 		fn mkdir
 		echo sync... >[1=2]
@@ -127,7 +129,10 @@ fn rm {
 		usage 'rm replica/path'
 
 	test -e $TRATMP/$1 || die rm $1: nonexist
-	/bin/rm -df $TRATMP/$1
+	if(test -d $TRATMP/$1){
+		rmdir $TRATMP/$1
+	}else
+		/bin/rm -f $TRATMP/$1
 }
 
 fn x {
