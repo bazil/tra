@@ -16,8 +16,13 @@ fn usage {
 }
 
 
-if(test -f testsetup)
-	. testsetup
+switch($#TRASRVOPT){
+case 0
+	OTRASRVOPT=()
+case *
+	OTRASRVOPT=-o^$TRASRVOPT
+}
+
 if(~ $#TRASRV 0)
 	TRASRV=(8.trasrv)
 if(~ $#SYNC 0)
@@ -52,7 +57,7 @@ fn replica {
 		$TRAMKDB -R $TRATMP/$i.db $i || die
 		{
 			echo '#!'$RCSHELL
-			echo $TRASRV '$*' -i $TRATMP/$i.ignore -r $TRATMP/$i $TRATMP/$i.db # $TRATMP/$i.proto
+			echo $TRASRV '$*' $OTRASRVOPT -i $TRATMP/$i.ignore $TRATMP/$i.db $TRATMP/$i
 		} >$TRATMP/$i.s || die
 		chmod +x $TRATMP/$i.s || die replica $i
 	}
