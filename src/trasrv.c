@@ -148,6 +148,7 @@ opensrv(char *dbfile)
 	if(sysname == nil)
 		sysfatal("cannot look up system name in database: %r");
 	inow = strtoul(now, &p, 0);
+	free(now);
 	if(*p != '\0')
 		sysfatal("bad format for event counter: '%s'", now);
 	inow++;
@@ -155,6 +156,7 @@ opensrv(char *dbfile)
 	snprint(buf, sizeof buf, "%lud", inow);
 	if(dbputmeta(srv->db, "now", buf) < 0)
 		sysfatal("cannot write event counter back to database: %r");
+	freevtime(srv->db->now);	/* old vtime for recovery */
 	srv->db->now = copyvtime(srv->now);
 	if(srv->db->rootstat)
 		maxvtime(srv->db->rootstat->synctime, srv->now);

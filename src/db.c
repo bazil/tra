@@ -1081,6 +1081,41 @@ namedmap(Db *db, char *s)
 	return m;
 }
 
+static Vtime*
+dbreadnow(Db *db)
+{
+	Vtime *v;
+	ulong inow;
+	char *sysname, *now, *p;
+
+	sysname = nil;
+	now = dbgetmeta(db, "now");
+	if(now == nil){
+		werrstr("cannot look up event counter in database: %r");
+		goto Fail;
+	}
+	sysname = dbgetmeta(db, "sysname");
+	if(sysname == nil){
+		werrstr("cannot look up system name in database: %r");
+		goto Fail;
+	}
+	inow = strtoul(now, &p, 0);
+	if(*p != '\0'){
+		werrstr("bad format for event counter: '%s'", now);
+		goto Fail;
+	}
+	v = mkvtime1(sysname, inow, time(0));
+	free(now);
+	free(sysname);
+	return v;
+
+  Fail:
+  	free(now);
+	free(sysname);
+  	return nil;
+}
+
+/* addr is zero iff Db is being created from scratch */
 static Db*
 genopendb(char *path, DStore *s, u32int addr, int pagesize)
 {
@@ -1213,12 +1248,18 @@ fprint(2, "rootstat block %p\n", db->rootstatblock);
 			db->meta->close(db->meta);
 			goto Err1;
 		}
-		if((db->rootstat = dbparsestat(db, db->rootstatblock->a, db->rootstatblock->n)) == nil){
-			rerrstr(err, sizeof err);
-			goto Err2;
-		}
+		if((db->rootstat = dbparsestat(db, db->rootstatblock->a, db->rootstatblock->n)) == nil)
+			goto Rerr2;
 	}
+
 	db->super = super;
+
+	if(a != 0){
+		/* load extant local event counter for recovery */
+		db->now = dbreadnow(db);
+		if(db->now == nil)
+			goto Rerr2;
+	}
 
 	logpath = logname(path);
 	if(logpath == nil){
@@ -1232,7 +1273,7 @@ fprint(2, "rootstat block %p\n", db->rootstatblock);
 	db->logfd = logfd;
 	db->logbuf = mkbuf(nil, LogSize);
 	db->logbase = db->logbuf->p;
-	if(dbapplylog(db) < 0){
+	if(a != 0 && dbapplylog(db) < 0){	/* run recovery on extant db */
 		snprint(err, sizeof err, "dbapplylog: %r");
 		goto Err2;
 	}
