@@ -31,6 +31,7 @@ fn replica {
 	/bin/rm -r $tmp/*
 	for(i){
 		/bin/mkdir $tmp/$i || die
+		echo tramkdb... >[1=2]
 		$TRAMKDB -R $tmp/$i.db $i owner descr proto || die
 		{
 			echo '#!/bin/rc'
@@ -61,6 +62,7 @@ fn sync {
 		rfork e
 		fn rm
 		fn mkdir
+		echo sync... >[1=2]
 		$SYNC $flags $tmp/$1.s $tmp/$2.s $3 || die sync $1 $2 $3
 	}
 }
