@@ -6,5 +6,5 @@ change b/foo 'goodbye world'
 create a/bar 'greetings world'	# so that sync must recurse at the root and consider foo
 sync b c
 rm b/foo
-sync a b
+sync -1 a b
 isfile a/foo 'hello world'

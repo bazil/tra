@@ -76,7 +76,8 @@ fn proto {
 }
 
 fn sync {
-	sleep 1
+	if(test -f /etc/passwd)
+		sleep 1
 	flags=()
 	if(~ $1 -*){
 		flags=$1
