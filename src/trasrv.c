@@ -827,7 +827,7 @@ srvmeta(Srv *srv, char *k)
 void
 usage(void)
 {
-	fprint(2, "usage: trasrv [-i inc/exc] [-o opt] ... dbfile root\n");
+	fprint(2, "usage: trasrv [-i inc/exc] [-o opt] ... -a | dbfile root\n");
 	exits("usage", 1);
 }
 
@@ -872,12 +872,16 @@ threadmain(int argc, char **argv)
 	Rpc t, r;
 	Srv *srv;
 	Flate *inflate, *deflate;
+	int automatic;
 
 	initfmt();
-
+	automatic = 0;
 	ARGBEGIN{
 	default:
 		usage();
+	case 'a':
+		automatic = 1;
+		break;
 	case 'D':
 		debug |= dbglevel(EARGF(usage()));
 		break;
@@ -894,13 +898,24 @@ threadmain(int argc, char **argv)
 	if(dbgname == nil)
 		dbgname = argv0;
 
-	if(argc != 2)
-		usage();
+	if(automatic){
+		if(argc != 0)
+			usage();
+		dbfile = trapath("local.tradb");
+		if(access(dbfile, 0) < 0)
+			tramkdb(dbfile, nil, 8192, 1);
+		root = getenv("HOME");
+		if(root == nil)
+			sysfatal("$HOME is not set");
+	}else{
+		if(argc != 2)
+			usage();
+		dbfile = argv[0];
+		root = argv[1];
+	}
 
 	nonotes();
 
-	dbfile = argv[0];
-	root = argv[1];
 	srv = opensrv(dbfile);
 	fprint(2, "# %V\n", srv->now);
 	srv->root = root;

@@ -105,6 +105,9 @@ threadmain(int argc, char **argv)
 			sysfatal("compressing %s: %r", sync->rb->name);
 	}
 
+	tralog("# starting tra%s %s %s", nop ? " -n" : (oneway ? " -1" : ""), 
+		argv[0], argv[1]);
+
 	if((oneway || nop) && rpcreadonly(sync->ra, 1) < 0)
 		sysfatal("setting %s to readonly: %r", argv[0]);
 	if(nop && rpcreadonly(sync->rb, 1) < 0)
@@ -268,25 +271,6 @@ thetime(long t)
 	return buf;
 }
 
-char*
-stripdot(char *s)
-{
-	static char buf[64];
-	char *p;
-
-	strecpy(buf, buf+sizeof buf, s);
-	p = strrchr(buf, '.');
-	if(p)
-		*p = 0;
-	return buf;
-}
-
-char*
-rsysname(Replica *r)
-{
-	return stripdot(r->sysname);
-}
-
 void
 printmtime(int fd, Replica *r, Stat *s)
 {
@@ -328,42 +312,6 @@ printconflict(Syncpath *s)
 	print("%P: %s conflict\n", s->p, conflictstr(s));
 	printmtime(1, s->sync->ra, s->a.s);
 	printmtime(1, s->sync->rb, s->b.s);
-}
-
-char*
-workstr(Syncpath *s)
-{
-	static char buf[128];
-
-	switch(s->action){
-	default:
-		sprint(buf, "<unexpected action %d>", s->action);
-		return buf;
-	case DoNothing:
-	case DoNothing1:
-		return "nothing";
-	case DoCopyBtoA:
-		snprint(buf, sizeof buf, "copy to %s", rsysname(s->sync->ra));
-		return buf;
-	case DoCopyAtoB:
-		snprint(buf, sizeof buf, "copy to %s", rsysname(s->sync->rb));
-		return buf;
-	case DoCreateA:
-		snprint(buf, sizeof buf, "create on %s", rsysname(s->sync->ra));
-		return buf;
-	case DoCreateB:
-		snprint(buf, sizeof buf, "create on %s", rsysname(s->sync->rb));
-		return buf;
-	case DoRemoveA:
-		snprint(buf, sizeof buf, "remove from %s", rsysname(s->sync->ra));
-		return buf;
-	case DoRemoveB:
-		snprint(buf, sizeof buf, "remove from %s", rsysname(s->sync->rb));
-		return buf;
-	case DoKids:
-	case DoKids1:
-		return "examine children";
-	}
 }
 
 int

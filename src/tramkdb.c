@@ -39,25 +39,7 @@ threadmain(int argc, char **argv)
 	name = argv[0];
 	sysname = argv[1];
 
-	if(!norandom)
-		sysname = esmprint("%s.%lux", sysname, lrand());
-
-	db = createdb(name, blocksize);
-	if(db == nil)
-		sysfatal("create db: %r");
-
-	db->rootstat = mkstat();
-	db->rootstatdirty = 1;
-	db->rootstat->state = SNonexistent;
-	db->rootstat->synctime = mkvtime();
-	db->rootstat->ctime = mkvtime();
-	db->rootstat->mtime = mkvtime();
-	dbputmeta(db, "sysname", sysname);
-	dbputmeta(db, "now", "0");
-
-	if(closedb(db) < 0)
-		sysfatal("dbclose: %r");
-
+	tramkdb(name, sysname, blocksize, !norandom);
 	exits(nil, 0);
 }
 

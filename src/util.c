@@ -291,3 +291,37 @@ initfmt(void)
 	fmtinstall('$', statfmt);
 	fmtinstall('V', vtimefmt);
 }
+
+void
+tralog(char *f, ...)
+{
+	va_list arg;
+	Fmt fmt;
+	char tim[100];
+	char buf[512];
+	static int logfd;
+	static int first = 1;
+	char *log;
+
+	strcpy(tim, ctime(time(0)));
+	tim[20] = 0;
+
+	if(first){
+		first = 0;
+		log = trapath("log");
+		if((logfd = open(log, OWRITE)) < 0)
+			if((logfd = create(log, OWRITE, 0666)) < 0)
+				return;
+	}
+	if(logfd == -1)
+		return;
+	seek(logfd, 0, 2);
+	fmtfdinit(&fmt, logfd, buf, sizeof buf);
+	va_start(arg, f);
+	fmtprint(&fmt, "%s ", tim);
+	fmtvprint(&fmt, f, arg);
+	fmtprint(&fmt, "\n");
+	fmtfdflush(&fmt);
+	va_end(arg);
+}
+

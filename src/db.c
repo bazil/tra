@@ -1566,3 +1566,34 @@ dbignorewrites(Db *db)
 //	dstoreignorewrites(db->s);
 	return 0;
 }
+
+void
+tramkdb(char *dbfile, char *gnot, int bsize, int addrandom)
+{
+	Db *db;
+
+	if(gnot == nil)
+		gnot = sysname();
+	if(gnot == nil)
+		sysfatal("cannot determine system name");
+	if(addrandom)
+		gnot = esmprint("%s.%lux", gnot, fastrand());
+
+	db = createdb(dbfile, bsize);
+	if(db == nil)
+		sysfatal("create db: %r");
+
+	db->rootstat = mkstat();
+	db->rootstatdirty = 1;
+	db->rootstat->state = SNonexistent;
+	db->rootstat->synctime = mkvtime();
+	db->rootstat->ctime = mkvtime();
+	db->rootstat->mtime = mkvtime();
+	dbputmeta(db, "sysname", gnot);
+	dbputmeta(db, "now", "0");
+
+	if(closedb(db) < 0)
+		sysfatal("dbclose: %r");
+	if(addrandom)
+		free(gnot);
+}
