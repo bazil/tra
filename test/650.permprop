@@ -1,0 +1,7 @@
+x check that permissions propagate correctly
+replica a b
+create a/hello 'hello world'
+chmod 467 $TRATMP/a/hello
+sync a b
+echo mode should be 467
+ls -l b/hello

@@ -1,0 +1,24 @@
+x test ghosts that are children of files
+
+replica a b c
+mkdir a/x
+create a/x/y 'hello world'
+sync a b
+change b/x/y 'goodbye world'
+create a/x/z 'greetings world'
+sync b a x/y
+# now y is noted as up-to-date but x is not
+rm a/x/y
+rm a/x/z
+rm a/x
+# if the a/x/y ghost doesn't stick around, we'll get an u/d conflict
+create a/x 'another world'
+sync a b
+
+# 
+# create x, x/y, then sync, then update x/y and create x/z, sync x/y,
+# then remove x and x/y and create a file f, then sync.  should be conflict.
+# 
+# create x, x/y, then sync, then update x/y, sync x/y,
+# then remove x and x/y and create a file f, then sync.  should be no conflict
+

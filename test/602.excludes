@@ -1,0 +1,27 @@
+x test correct bookkeeping in presence of exclude dirs
+replica a b
+mkdir a/dir
+create a/dir/hello 'hello world'
+sync a b
+isfile b/dir/hello 'hello world'
+ignore a 'exclude dir'
+create a/dir/foo.8 'goodbye world'
+sync -v a b
+isnot b/dir/foo.8
+ignore a ''
+sync -v a b
+isfile b/dir/foo.8 'goodbye world'
+
+x test correct bookkeeping in presence of client-sideexcludes
+replica a b
+mkdir a/dir
+create a/dir/hello 'hello world'
+sync a b
+isfile b/dir/hello 'hello world'
+ignore b 'exclude dir'
+create a/dir/foo.8 'goodbye world'
+sync -Cv a b
+isnot b/dir/foo.8
+ignore b ''
+sync -v a b
+isfile b/dir/foo.8 'goodbye world'

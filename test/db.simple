@@ -1,0 +1,6 @@
+new
+putstat '' rsc a:1
+putstat a jmk a:1
+putstat a/b jmk a:1,b:2
+putstat a/b ghost a:1,b:2
+getkids a
