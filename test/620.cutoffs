@@ -5,5 +5,5 @@ mkdir a/foo/bar
 mkdir a/foo/bar/baz
 create a/foo/bar/baz/quux 'hello world'
 sync a b
-sync -D a b
+sync -Dsync a b
 

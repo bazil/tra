@@ -7,6 +7,6 @@ rm b/hello
 scan b
 dump a
 dump b
-sync -D b a
+sync b a
 isnot a/hello
 

@@ -3,5 +3,5 @@ replica a b c
 create a/foo 'hello world'
 sync a b
 rm a/foo
-sync -D c a
+sync c a
 isnot c/foo
