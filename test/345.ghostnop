@@ -1,0 +1,10 @@
+x ghost non-propagation
+replica a b c
+create a/foo 'hello world'
+sync a b
+change b/foo 'goodbye world'
+create a/bar 'greetings world'	# so that sync must recurse at the root and consider foo
+sync b c
+rm b/foo
+sync -D a b
+isfile a/foo 'hello world'

@@ -1,0 +1,7 @@
+x file/directory conflict
+replica a b
+mkdir a/foo
+sync a b
+rm b/foo
+create b/foo 'hello world'
+sync -C b a

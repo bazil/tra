@@ -1,0 +1,7 @@
+x ghost non-propagation
+replica a b
+create a/foo 'hello world'
+sync a b
+rm b/foo
+sync a b
+isnot b/foo
