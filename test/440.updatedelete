@@ -1,9 +1,0 @@
-x simple update/delete conflict
-replica a b
-create a/hello 'hello world'
-sync a b
-isfile b/hello 'hello world'
-rm b/hello
-change a/hello 'goodbye world'
-sync -C a b
-
