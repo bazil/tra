@@ -176,6 +176,7 @@ syskids(char *tpath, Sysstat ***pk, Sysstat *ss)
 			k = erealloc(k, (n+32)*sizeof(k[0]));
 		k[n] = emalloc(sizeof(Sysstat));
 		k[n]->name = estrdup(de->d_name);
+		k[n]->st = st;
 		n++;
 	}
 	free(s);
@@ -344,8 +345,9 @@ sysstat(char *tpath, Stat *s, int recordchanges, Sysstat *ss)
 	struct stat d;
 	Datum dqid;
 
-	USED(ss);
-	if(stat(tpath, &d) < 0){
+	if(ss)
+		d = ss->st;
+	else if(stat(tpath, &d) < 0){
 		if(s->state != SNonexistent){
 			if(!recordchanges)
 				abort();
@@ -429,7 +431,8 @@ sysstat(char *tpath, Stat *s, int recordchanges, Sysstat *ss)
 				changed = 1;
 			}
 		}
-	
+
+		
 		dqid.a = mksig(&d, &dqid.n);
 		if(s->length != d.st_size /* || config("paranoid") */
 		|| datumcmp(&dqid, &s->localsig) != 0){
@@ -437,7 +440,9 @@ if(0)			fprint(2, "shafile %s length %lud %lud datum %d/%.*H %d/%.*H\n",
 				tpath, (ulong)s->length, (ulong)d.st_size,
 				(int)s->localsig.n,
 				(int)s->localsig.n, s->localsig.a, (int)dqid.n, (int)dqid.n, dqid.a);
+			free(s->localsig.a);
 			s->localsig = dqid;
+			dqid.a = nil;
 			shafile(sha, tpath);
 			if(s->length != d.st_size || memcmp(s->sha1, sha, 20) != 0){
 				memmove(s->sha1, sha, 20);
@@ -446,6 +451,7 @@ if(0)			fprint(2, "shafile %s length %lud %lud datum %d/%.*H %d/%.*H\n",
 				contentschanged = 1;
 			}
 		}
+		free(dqid.a);
 	}
 
 	/*

@@ -8,9 +8,7 @@ replread(Replica *r)
 	int n, nn;
 	Buf *b, *bb;
 
-dbg(DbgRpc, "replread lock\n");
 	qlock(&r->rlk);
-dbg(DbgRpc, "replread locked\n");
 	if(r->err){
 	Error:
 		werrstr("%s", r->err);
@@ -21,7 +19,6 @@ dbg(DbgRpc, "replread locked\n");
 	if(tcanread(r->rfd) < 4)
 		replflush(r);
 
-dbg(DbgRpc, "replread read 4\n");
 	if(treadn(r->rfd, hdr, 4) != 4){
 		r->err = "eof reading input";
 		goto Error;
@@ -45,7 +42,6 @@ dbg(DbgRpc, "replread read 4\n");
 	if(tcanread(r->rfd) < n)
 		replflush(r);
 
-dbg(DbgRpc, "replread read %d\n", n);
 	b = mkbuf(nil, n);
 	if(treadn(r->rfd, b->p, n) != n){
 		r->err = "eof reading input";
@@ -71,7 +67,6 @@ dbg(DbgRpc, "replread read %d\n", n);
 	}
 	inrpctot += b->ep - b->p;
 	qunlock(&r->rlk);
-dbg(DbgRpc, "replread unlocked\n");
 	return b;
 }
 
@@ -82,9 +77,7 @@ replwrite(Replica *r, Buf *b)
 	uchar hdr[8];
 	Buf *bb;
 
-dbg(DbgRpc, "replwrite lock\n");
 	qlock(&r->wlk);
-dbg(DbgRpc, "replwrite locked\n");
 	n = b->ep - b->p;
 	bb = nil;
 	outrpctot += n;
@@ -105,7 +98,6 @@ dbg(DbgRpc, "replwrite locked\n");
 		n = b->ep - b->p;
 		outzrpctot += n;
 	}
-dbg(DbgRpc, "writing 4+%d\n", n);
 	PLONG(hdr, n);
 	if(twrite(r->wfd, hdr, 4) != 4
 	|| twrite(r->wfd, b->p, n) != n){
@@ -117,7 +109,6 @@ fprint(2, "write error\n");
 	}
 	free(bb);
 	qunlock(&r->wlk);
-dbg(DbgRpc, "wrote 4+%d. %lux\n", n, *(ulong*)&r->wlk);
 	return 0;
 }
 

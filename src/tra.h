@@ -26,7 +26,9 @@ typedef	intptr_t intptr;
 
 enum
 {
-	STACK = 32768
+	STACK = 32768,
+	SyncThreads = 32,
+	WorkThreads = 32,
 };
 
 
@@ -55,7 +57,8 @@ typedef struct Vtime		Vtime;
 
 enum
 {
-	IOCHUNK = 64*1024,
+	/* must be < 64k */
+	IOCHUNK = 48*1024,
 
 	/*
 	 * we want to avoid interpreting text as a size
@@ -141,6 +144,7 @@ struct Db
 	int ignwr;
 	int alwaysflush;
 	Listcache *listcache;
+	Vtime *now;
 };
 
 struct Fid 
@@ -168,6 +172,7 @@ struct Hashlist
 {
 	Hash *h;
 	int nh;
+	vlong tot;
 };
 
 /*
@@ -378,6 +383,7 @@ struct Stat
 struct Sysstat
 {
 	char *name;
+	struct stat st;
 };
 
 struct Sync

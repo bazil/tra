@@ -46,6 +46,8 @@ OFILES=\
 	util.$O\
 	work.$O\
 
+HFILES=tra.h
+
 LIB=libtra.a
 
 <$PLAN9/src/mklib

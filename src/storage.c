@@ -170,6 +170,7 @@ preadn(int fd, void *vbuf, long size, vlong off)
 static int
 applylog(XDStore *ds)
 {
+	int np;
 	uchar *a, *buf;
 	u32int addr;
 	Biobuf *b;
@@ -194,6 +195,7 @@ applylog(XDStore *ds)
 		werrstr("malformed log");
 		goto Error;
 	}
+	np = 0;
 	for(;;){
 		if(Bgbit32(b, &addr) < 0)
 			goto Error;
@@ -212,7 +214,9 @@ DBG print("apply log page %ud\n", addr);
 abort();
 			goto Error;
 }
+		np++;
 	}
+	fprint(2, "applied changes to %d pages\n", np);
 	free(b);
 	free(buf);
 	return 0 && fsync(ds->fd);
@@ -294,11 +298,57 @@ DBG print("log page %ud\n", p->addr);
 }
 
 static int
+ppaddrcmp(const void *va, const void *vb)
+{
+	Dpage *a, *b;
+
+	a = *(Dpage**)va;
+	b = *(Dpage**)vb;
+	if(a->addr < b->addr)
+		return -1;
+	if(a->addr > b->addr)
+		return 1;
+	return 0;
+}
+
+static int
+dirtylist(XDStore *ds, Dpage ***ppp)
+{
+	int i, n, m;
+	Dpage *p, **pp;
+
+	n = 0;
+	for(i=0; i<nelem(ds->hash); i++)
+		for(p=ds->hash[i]; p; p=p->next)
+			if(p->flags&DDirty)
+				n++;
+	if(n == 0){
+		*ppp = nil;
+		return 0;
+	}
+
+	pp = malloc(n*sizeof(pp[0]));
+	if(pp == nil)
+		return -1;
+
+	m = 0;
+	for(i=0; i<nelem(ds->hash); i++)
+		for(p=ds->hash[i]; p; p=p->next)
+			if(p->flags&DDirty)
+				pp[m++] = p;
+	assert(m == n);
+
+	qsort(pp, n, sizeof(pp[0]), ppaddrcmp);
+	*ppp = pp;
+	return n;
+}
+
+static int
 writelog(XDStore *ds)
 {
-	int i;
+	int i, np;
 	Biobuf *b;
-	Dpage *p;
+	Dpage **pp;
 
 	if(seek(ds->logfd, 0, 0) != 0)
 		return -1;
@@ -317,11 +367,14 @@ writelog(XDStore *ds)
 	if(serializeroot(ds) < 0)
 		goto Err;
 
-	for(i=0; i<nelem(ds->hash); i++)
-		for(p=ds->hash[i]; p; p=p->next)
-			if(p->flags&DDirty)
-				if(writelogpage(b, p) < 0)
-					goto Err;
+	np = dirtylist(ds, &pp);
+	if(np == -1)
+		goto Err;
+	for(i=0; i<np; i++)
+		if(writelogpage(b, pp[i]) < 0)
+			goto Err;
+	free(pp);
+
 	if(Bpbit32(b, ~(u32int)0) < 0)
 		goto Err;
 	if(Bflush(b) < 0)
@@ -333,6 +386,29 @@ writelog(XDStore *ds)
 	if(pwrite(ds->logfd, "log\n", 4, 0) != 4)
 		return -1;
 	if(0 && fsync(ds->logfd) < 0)
+		return -1;
+	return 0;
+}
+
+static int
+writepages(XDStore *ds)
+{
+	int i, np;
+	Dpage **pp, *p;
+
+	np = dirtylist(ds, &pp);
+	if(np == -1)
+		return -1;
+	for(i=0; i<np; i++){
+		p = pp[i];
+	//	fprint(2, "%lux...", p->addr);
+		if(pwrite(ds->fd, p->a, ds->ds.pagesize, p->addr) != ds->ds.pagesize){
+			abort();
+			return -1;
+		}
+	}
+
+	if(0 && fsync(ds->fd) < 0)
 		return -1;
 	return 0;
 }
@@ -771,7 +847,7 @@ flush(XDStore *s, int closing)
 if(!closing)return 0;
 
 	if(writelog(s) < 0
-	|| applylog(s) < 0
+	|| writepages(s) < 0
 	|| truncatelog(s) < 0
 	|| cleanpages(s) < 0){
 		s->broken = 1;

@@ -28,7 +28,7 @@ workthread(void *a)
 	threadsetname("workthread");
 	q = a;
 	subq = mkqueue("subq", 128);
-	for(i=0; i<128; i++)
+	for(i=0; i<WorkThreads; i++)
 		spawn(workthread0, subq);
 
 	while((s = qrecv(q)) != nil)

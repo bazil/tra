@@ -30,6 +30,6 @@ syncthread(void *a)
 {
 	int i;
 
-	for(i=0; i<128; i++)
+	for(i=0; i<SyncThreads; i++)
 		spawn(syncthread0, a);
 }

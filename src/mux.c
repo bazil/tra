@@ -73,8 +73,8 @@ clientrpc(Replica *repl, Rpc *r)
 			 * requests.  There are at most two mux readers -- one for
 			 * each trasrv -- hence the test here.
 			 */
-			while(yield() >= 2)
-				;
+		//	while(yield() >= 2)
+		//		;
 			threadstate("replread %R", r);
 			if((b = replread(repl)) == nil){
 				rerrstr(cli->err, sizeof cli->err);

@@ -81,7 +81,6 @@ enum {
 static uint
 splitblock(uchar *dat, uint n)
 {
-	int i;
 	uchar *bp, *ep, *p, *q;
 	ulong v;
 #ifdef CHECK
@@ -156,12 +155,16 @@ opensrv(char *dbfile)
 	snprint(buf, sizeof buf, "%lud", inow);
 	if(dbputmeta(srv->db, "now", buf) < 0)
 		sysfatal("cannot write event counter back to database: %r");
+	srv->db->now = copyvtime(srv->now);
+	if(srv->db->rootstat)
+		maxvtime(srv->db->rootstat->synctime, srv->now);
 
 	/*
 	 * The fact that the time has changed must go out to disk
 	 * before we start advertising that time to other machines.
 	 */
 	logflush(srv->db);
+
 	return srv;
 }
 
@@ -208,13 +211,33 @@ copynow(Vtime *now, ulong mtime)
 	return now;
 }
 
+static int
+syskidscmp(const void *va, const void *vb)
+{
+	Sysstat *a, *b;
+
+	a = *(Sysstat**)va;
+	b = *(Sysstat**)vb;
+	return strcmp(a->name, b->name);
+}
+
+static int
+dbgetkidscmp(const void *va, const void *vb)
+{
+	Kid *a, *b;
+
+	a = (Kid*)va;
+	b = (Kid*)vb;
+	return strcmp(a->name, b->name);
+}
+
 /*
  * BUG?: assumes db ops cannot fail. 
  */
 static int
 statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 {
-	int changed, i, nk, nks, ostate;
+	int changed, i, j, nk, nks, ostate;
 	char *tpath;
 	Apath *ap;
 	Kid *k;
@@ -243,13 +266,14 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 		s->state &= ~SNonreplicated;
 		dbputstat(srv->db, ap->e, ap->n, s);
 	}
+/*
 	if(leqvtime(srv->now, s->synctime)){
 		free(ap);
 		if(os==nil)
 			freestat(s);
 		return 0;
 	}
-
+*/
 	tpath = translate(srv, p);
 	ostate = s->state;
 	changed = sysstat(tpath, s, 1, ss);
@@ -268,30 +292,43 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 		freevtime(s->mtime);
 		s->mtime = copynow(srv->now, s->sysmtime);
 //fprint(2, "%P: now %$\n", p, s);
+		dbputstat(srv->db, ap->e, ap->n, s);
 	}
+/*
 	s->synctime = maxvtime(s->synctime, srv->now);
+*/
 
+	nks = 0;
+	ks = nil;
 	if(s->state == SDir){
 //fprint(2, "syskids dir %s\n", tpath);
 		nks = syskids(tpath, &ks, ss);
+		qsort(ks, nks, sizeof(ks[0]), syskidscmp);
 		for(i=0; i<nks; i++){
+			if(i) assert(strcmp(ks[i-1]->name, ks[i]->name) < 0);
 			kp = mkpath(p, ks[i]->name);
 			statupdate(srv, kp, nil, s->mtime, ks[i]);
 			freepath(kp);
 		}
-		freesysstatlist(ks, nks);
 	}
 
 	k = nil;
 	nk = dbgetkids(srv->db, ap->e, ap->n, &k);
+	qsort(k, nk, sizeof(k[0]), dbgetkidscmp);
+	j = 0;
 	for(i=0; i<nk; i++){
+		if(i) assert(strcmp(k[i-1].name, k[i].name) < 0);
+		while(j<nks && strcmp(ks[j]->name, k[i].name) < 0)
+			j++;
+		if(j<nks && strcmp(ks[j]->name, k[i].name) == 0)
+			continue;
 		kp = mkpath(p, k[i].name);
 		statupdate(srv, kp, k[i].stat, s->mtime, nil);
 		freepath(kp);
 	}
+	freesysstatlist(ks, nks);
 	freekids(k, nk);
 
-	dbputstat(srv->db, ap->e, ap->n, s);
 	if(m)
 		maxvtime(m, s->mtime);
 //fprint(2, "%P: mtime now %V\n", p, m);
@@ -834,8 +871,6 @@ threadmain(int argc, char **argv)
 	Flate *inflate, *deflate;
 
 	initfmt();
-
-fprint(2, "HELLO FROM TRASRV\n");
 
 	ARGBEGIN{
 	default:

@@ -95,12 +95,13 @@ Hashlist*
 rpchashfile(Replica *repl, int fd)
 {
 	Hashlist *hl;
-	int i, n;
+	int i, n, nh;
 	uchar *buf;
 	vlong off;
 
 	hl = mkhashlist();
 	off = 0;
+	nh = 0;
 	buf = emallocnz(IOCHUNK);
 	while((n = rpcreadhash(repl, fd, buf, IOCHUNK)) > 0){
 		if(n % (2+SHA1dlen)){
@@ -111,6 +112,7 @@ rpchashfile(Replica *repl, int fd)
 		}
 		for(i=0; i<n; i+=2+SHA1dlen){
 			hl = addhash(hl, buf+i+2, off, SHORT(buf+i));
+			nh++;
 			off += SHORT(buf+i);
 		}
 	}
@@ -119,6 +121,7 @@ rpchashfile(Replica *repl, int fd)
 		free(hl);
 		return nil;
 	}
+	assert(hl->nh == nh);
 	return hl;
 }
 

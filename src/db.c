@@ -62,12 +62,17 @@ strtoid(Db *db, char *s)
 	Datum k, v;
 	uchar buf[4];
 
-	if(s == nil)
+	if(s == nil){
+		// fprint(2, "strtoid nil => 0\n");
 		return 0;
+	}
+
 	s = atom(s);
 
-	if(strcachebystr(&db->strcache, s, &i) >= 0)
+	if(strcachebystr(&db->strcache, s, &i) >= 0){
+		// fprint(2, "strtoid %s => %d\n", s, i);
 		return i;
+	}
 
 strtoids++;
 	k.a = s;
@@ -77,6 +82,7 @@ strtoids++;
 	if(db->strtoid->lookup(db->strtoid, &k, &v) >= 0){
 		if(v.n != 2)
 			panic("db: bad data in strtoid map");
+		// fprint(2, "dbstrtoid %s %d\n", s, i);
 		i = SHORT(buf);
 		strcache(&db->strcache, s, i);
 		return i;
@@ -98,14 +104,15 @@ strtoids++;
 	if(i==65535)
 		panic("db: too many strings");
 
+	// fprint(2, "dbstrtoid %s alloc %d\n", s, j);
 	v.a = s;
 	v.n = strlen(s);
 	if(db->idtostr->insert(db->idtostr, &k, &v, DMapCreate) < 0)
 		panic("db: cannot create new string");
 	if(db->strtoid->insert(db->strtoid, &v, &k, DMapCreate) < 0)
 		panic("db: cannot create new string");
-	strcache(&db->strcache, s, i);
-	return i;
+	strcache(&db->strcache, s, j);
+	return j;
 }
 
 static char*
@@ -157,6 +164,9 @@ dbwritebufstring(Db *db, Buf *b, char *s)
 	int i;
 
 	i = strtoid(db, s);
+	if(s)
+		assert(i);
+
 	writebufc(b, i>>8);
 	writebufc(b, i);
 }
@@ -164,6 +174,8 @@ dbwritebufstring(Db *db, Buf *b, char *s)
 static void
 dbwritebufltime(Db *db, Buf *b, Ltime *t)
 {
+	assert(t->m != nil);
+
 	writebufc(b, 1);
 	writebufl(b, t->t);
 	writebufl(b, t->wall);
@@ -186,6 +198,7 @@ dbreadbufltime(Db *db, Buf *b, Ltime *t)
 	t->t = readbufl(b);
 	t->wall = readbufl(b);
 	t->m = dbreadbufstringatom(db, b);
+	assert(t->m != nil);
 }
 
 static void
@@ -375,6 +388,7 @@ dbwalks++;
 	w = emalloc((ne+1)*sizeof(w[0]));
 	w[0].m = db->root;
 	w[0].s = copystat(db->rootstat);
+	maxvtime(w[0].s->synctime, db->now);
 	w[0].addr = db->root->addr;
 	*wp = w;
 
@@ -406,6 +420,7 @@ dbwalklooks++;
 	n = i;
 
 	/* down-propagate sync times */
+	maxvtime(w[0].s->synctime, db->now);
 	for(i=1; i<=n; i++)
 		maxvtime(w[i].s->synctime, w[i-1].s->synctime);
 
@@ -427,6 +442,7 @@ writedbwalk(Db *db, Dbwalk *w, char **e, int n)
 	 */
 	for(i=n; i>0; i--)
 		unmaxvtime(w[i].s->synctime, w[i-1].s->synctime);
+	unmaxvtime(w[0].s->synctime, db->now);
 
 	/*
 	 * check whether any child ghosts can be reclaimed.
@@ -545,11 +561,6 @@ dbgetstat(Db *db, char **e, int ne, Stat **ps)
 {
 	int n;
 	Dbwalk *w;
-
-	if(ne == 0){
-		*ps = copystat(db->rootstat);
-		return 0;
-	}
 
 	n = dbwalk(db, e, ne, &w);
 
@@ -727,11 +738,6 @@ dbgetmeta(Db *db, char *key)
 
 	if(db->meta->lookup(db->meta, &k, &v) < 0)
 		return nil;
-	free(v.a);
-	v.a = emalloc(v.n+1);
-	((char*)v.a)[v.n] = '\0';
-	if(db->meta->lookup(db->meta, &k, &v) < 0)
-		panic("dbgetmeta");
 	return v.a;
 }
 
@@ -1154,6 +1160,7 @@ genopendb(char *path, DStore *s, u32int addr, int pagesize)
 		}else
 			super->close(super);
 		close(db->logfd);
+		closelistcache(db->listcache);
 		free(db);
 		werrstr("%s", err);
 		return nil;
@@ -1309,6 +1316,7 @@ opendb(char *path)
 		werrstr("bad db address in superblock");
 		goto Error;
 	}
+	free(b);
 
 	db = genopendb(path, s, a, 0);
 	if(db == nil)	
@@ -1377,6 +1385,7 @@ closedb(Db *db)
 
 	if(db->breakwrite){
 		free(db->logbuf);
+		closelistcache(db->listcache);
 		free(db);
 		return 0;
 	}

@@ -24,6 +24,7 @@ addhash(Hashlist *hl, uchar *sha1, vlong off, vlong n)
 	memmove(h->sha1, sha1, SHA1dlen);
 	h->off = off;
 	h->n = n;
+	hl->tot += n;
 	return hl;
 }
 

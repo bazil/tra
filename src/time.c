@@ -39,6 +39,7 @@ mkvtime1(char *m, ulong t, ulong wall)
 {
 	Vtime *v;
 
+	assert(m != nil);
 	v = emalloc(sizeof *v);
 	v->l = emalloc(sizeof(v->l[0]));
 	v->nl = 1;
@@ -293,6 +294,8 @@ minvtime(Vtime *a, Vtime *b)
 static void
 writebufltime(Buf *b, Ltime *t)
 {
+	assert(t->m != nil);
+
 	/* N.B. Version #1 is used by the database routines. */
 	writebufc(b, 0);
 	writebufl(b, t->t);

@@ -97,14 +97,18 @@ dbg(int level, char *f, ...)
 {
 	va_list arg;
 	Fmt fmt;
+	static vlong t0;
 	char buf[128];
 
 	if((debug&level) != level)
 		return;
 
+	if(t0 == 0)
+		t0 = nsec();
+
 	fmtfdinit(&fmt, 2, buf, sizeof buf);
 	va_start(arg, f);
-	fmtprint(&fmt, "%s: ", dbgname ? dbgname : argv0);
+	fmtprint(&fmt, "%.6f %s: ", (nsec()-t0)/1.e6, dbgname ? dbgname : argv0);
 	fmtvprint(&fmt, f, arg);
 	va_end(arg);
 	fmtfdflush(&fmt);
