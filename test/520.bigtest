@@ -12,14 +12,17 @@ change a/foo 'a'
 change d/foo 'd'
 sync -C b c
 # suppose we resolve by making a new file
+sync -t b c foo
 change c/foo 'bc'
 sync c b
 # then there should be a conflict at ab
 sync -C a b
+# resolve for b
+sync -t a b foo
 sync b a
 # and a conflict at cd
 sync -C c d
-sync d c
+sync -C d c
 isfile a/foo 'bc'
 isfile d/foo 'd'
 

@@ -1,4 +1,4 @@
-x test recreation of directories because of u/u conflicts.
+x test [lack of] creation of directories because of u/u conflicts.
 replica a b c
 mkdir a/foo
 mkdir a/foo/bar
@@ -19,6 +19,4 @@ sync a b
 isnot b/foo
 change c/foo/bar/baz/quux 'goodbye world'
 sync -C c b
-isnot b/foo/bar/baz/quux
-isfile b/foo/bar/baz/quux.TRA 'goodbye world'
-
+isnot b/foo/bar/baz

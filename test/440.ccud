@@ -1,0 +1,10 @@
+x create/create then update/delete non-conflict
+replica a b c
+create a/foo 'hello world'
+create b/foo 'hello world'
+sync -C a b
+sync -t a b
+sync a c
+rm b/foo
+sync b c
+isnot c/foo

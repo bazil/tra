@@ -5,8 +5,7 @@ create b/foo 'goodbye world'
 sync -C a b
 isfile a/foo 'hello world'
 isfile b/foo 'goodbye world'
-# isfile b/foo.TRA 'hello world'
-sync a b
+sync -C a b	# ignore conflict
 change a/foo 'bye bye world'
 sync -C a b
 isfile b/foo 'goodbye world'
