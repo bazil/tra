@@ -22,7 +22,8 @@ syncthread0(void *a)
 		if(s->state == SyncError)
 			goto Err;
 		if(s->triage != DoNothing)
-			tralog("%P %s: [%$] [%$]", s->p, s->a.s, s->b.s);
+			tralog("%P %s%s: [%$] [%$]", s->p, s->conflict ? "conflict " : "",
+				workstr(s, s->triage), s->a.s, s->b.s);
 		qsend(s->sync->triageq, s);
 	}		
 }
@@ -56,11 +57,11 @@ rsysname(Replica *r)
 }
 
 char*
-workstr(Syncpath *s)
+workstr(Syncpath *s, int action)
 {
 	static char buf[128];
 
-	switch(s->action){
+	switch(action){
 	default:
 		sprint(buf, "<unexpected action %d>", s->action);
 		return buf;

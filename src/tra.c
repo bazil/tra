@@ -212,11 +212,13 @@ resolvethread(void *v)
 			else if(res == 'b')
 				s->action = s->triage&~1;
 			else if(res == 'm' && s->a.s->mtime && s->b.s->mtime
-			&& s->a.s->mtime != s->b.s->mtime){
+			&& s->a.s->mtime != s->b.s->mtime
+			&& s->a.s->state==SFile && s->b.s->state==SFile){
 				if(s->a.s->mtime > s->b.s->mtime)
 					s->action = s->triage|1;
 				else
 					s->action = s->triage&~1;
+				tralog("mtime resolve %P -> %s", s->p, workstr(s, s->action));
 			}else{
 				nconflict++;
 				printconflict(s);
@@ -328,7 +330,7 @@ printwork(Syncpath *s)
 {
 	if(quiet(s))
 		return;
-	print("%P: will %s\n", s->p, workstr(s));
+	print("%P: will %s\n", s->p, workstr(s, s->action));
 }
 
 void
@@ -338,7 +340,7 @@ printfinished(Syncpath *s)
 	case SyncDone:
 		if(quiet(s))
 			return;
-		print("%P: did %s\n", s->p, workstr(s));
+		print("%P: did %s\n", s->p, workstr(s, s->action));
 		break;
 	case SyncError:
 		print("error syncing %P: %s\n", s->p, s->err);

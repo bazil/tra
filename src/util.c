@@ -303,9 +303,6 @@ tralog(char *f, ...)
 	static int first = 1;
 	char *log;
 
-	strcpy(tim, ctime(time(0)));
-	tim[20] = 0;
-
 	if(first){
 		first = 0;
 		log = trapath("log");
@@ -316,6 +313,8 @@ tralog(char *f, ...)
 	if(logfd == -1)
 		return;
 	seek(logfd, 0, 2);
+	strcpy(tim, ctime(time(0)));
+	tim[19] = 0;
 	fmtfdinit(&fmt, logfd, buf, sizeof buf);
 	va_start(arg, f);
 	fmtprint(&fmt, "%s ", tim);

@@ -13,7 +13,6 @@ threadmain(int argc, char **argv)
 {
 	int blocksize, norandom;
 	char *name, *sysname;
-	Db *db;
 
 	initfmt();
 

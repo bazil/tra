@@ -410,7 +410,7 @@ enum
 enum
 {	/* Syncpath triage, action */
 	/* to find the opposite action, xor with 1 */
-	/* backwards actions are even, forward actions are odd */
+	/* backwards actions (B->A) are even, forward actions (A->B) are odd */
 	DoNothing = 0,
 	DoNothing1,
 	DoCopyBtoA = 2,
@@ -635,7 +635,7 @@ Vtime*		unmaxvtime(Vtime*, Vtime*);
 int		vtimefmt(Fmt*);
 void		warn(const char*, ...);
 void		workthread(void*);
-char*	workstr(Syncpath*);
+char*	workstr(Syncpath*, int);
 void		writebufbytes(Buf*, void*, long);
 void		writebufc(Buf*, uchar);
 void		writebufdatum(Buf*, Datum);

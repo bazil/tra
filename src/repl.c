@@ -16,8 +16,13 @@ replread(Replica *r)
 		return nil;
 	}
 
-	if(tcanread(r->rfd) < 4)
+	if(tcanread(r->rfd) < 4){
+		qunlock(&r->rlk);
 		replflush(r);
+		qlock(&r->rlk);
+		if(r->err)
+			goto Error;
+	}
 
 	if(treadn(r->rfd, hdr, 4) != 4){
 		r->err = "eof reading input";
