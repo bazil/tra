@@ -154,6 +154,7 @@ synckids(Syncpath *s)
 	}
 	mergekids(s, ak->k, ak->nk, bk->k, bk->nk, n);
 	s->npend = s->nkid;
+	s->finishstate = SyncDone;
 	for(i=0; i<n; i++)
 		qsend(s->sync->syncq, &s->kid[i]);
 

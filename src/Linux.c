@@ -5,22 +5,6 @@
 #include <signal.h>
 #include "tra.h"
 
-ulong
-fastrand(void)
-{
-	ulong seed;
-	struct timeval tv;
-	static int first = 1;
-
-	if(first){
-		gettimeofday(&tv, nil);
-		seed = tv.tv_sec ^ tv.tv_usec ^ (getpid()<<8);
-		srandom(seed);
-		first = 0;
-	}
-	return (random()&0xFFFF)|(random()<<16);
-}
-
 char*
 trapath(char *name)
 {
@@ -50,7 +34,7 @@ doauto(char *name)
 	&& strcmp(name, "local") != 0
 	&& (gnot==nil || strcmp(name, gnot) != 0)){
 		*argp++ = "ssh";
-		*argp++ = "-X";
+		*argp++ = "-x";
 		*argp++ = "-C";
 		*argp++ = name;
 	}

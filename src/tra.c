@@ -176,6 +176,7 @@ threadmain(int argc, char **argv)
 	}
 
 	if(expectconflicts != (nsuccess < npending)){
+		fprint(2, "expect %d, got %d<%d = %d\n", expectconflicts, nsuccess, npending, nsuccess<npending);
 		if(expectconflicts)
 			exits("expected conflicts, got none", 2);
 		else
@@ -352,6 +353,7 @@ printfinished(Syncpath *s)
 		/* unresolved conflict; do nothing */
 		if(s->conflict)
 			break;
+		break;
 	default:
 		print("%P: unexpected state %s\n", s->p, syncpathstate(s->state));
 		break;

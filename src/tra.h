@@ -3,9 +3,11 @@
 #include <libc.h>
 #include <bio.h>
 #include <libsec.h>
+#include <mux.h>
 #include <thread.h>
 #include "storage.h"
 #include "libzlib/trazlib.h"
+
 /*
  * For compatibility, the Unix port of the Plan 9 libraries
  * save the signal mask, so that you can longjmp from
@@ -214,21 +216,14 @@ struct Path
 
 struct Replica
 {
-	QLock lk;
-	QLock rlk;
-	QLock wlk;
-	char *err;
 	char *name;
-	Rendez tagrend;
-	Client *wait[256];
-	int ntag;
-	int nsleep;
-	int muxer;
+	char *sysname;
 	Fd *rfd;
 	Fd *wfd;
 	Flate *inflate;
 	Flate *deflate;
-	char *sysname;
+	char *err;
+	Mux mux;
 };
 
 enum
@@ -430,6 +425,7 @@ struct Syncpath
 	int state;
 	int triage;
 	int action;
+	int finishstate;
 	struct {
 		int complete;
 		Stat *s;
@@ -661,9 +657,6 @@ extern int	inrpctot, outrpctot;
 extern int	inzrpctot, outzrpctot;
 extern int nop;
 
-#if 1
+#undef exits
 #define exits(string, number) threadexitsall(string)
-#else
-#define exits(string, number) threadexitsall(number)
-#endif
 #define	chan(x)	chancreate(sizeof(*(x*)0), 0)

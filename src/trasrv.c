@@ -867,12 +867,12 @@ config(char *s)
 void
 threadmain(int argc, char **argv)
 {
-	char *dbfile, err[ERRMAX], *root;
+	char *dbfile, *iefile, err[ERRMAX], *root;
 	Buf *b;
 	Rpc t, r;
 	Srv *srv;
 	Flate *inflate, *deflate;
-	int automatic;
+	int fd, automatic;
 
 	initfmt();
 	automatic = 0;
@@ -907,6 +907,15 @@ threadmain(int argc, char **argv)
 		root = getenv("HOME");
 		if(root == nil)
 			sysfatal("$HOME is not set");
+		iefile = trapath("local.ie");
+		if(access(iefile, 0) < 0){
+			if((fd = create(iefile, OWRITE, 0666)) > 0){
+				fprint(fd, "exclude .tra\n");
+				close(fd);
+			}
+		}
+		if(access(iefile, AREAD) >= 0)
+			loadignore(iefile);
 	}else{
 		if(argc != 2)
 			usage();
@@ -1085,6 +1094,7 @@ threadmain(int argc, char **argv)
 
 	srvhangup(srv);
 
+if(0)
 {
 extern int dcs, dcentrycmps, dclistlookups, dclistadd1s, dclistinserts;
 extern int dclookupavls, dcinsertavls, dcdeleteavls, lookupavls;

@@ -20,6 +20,7 @@ synctriage(Syncpath *s)
 
 	coverage();
 	if((sa->state&SNonreplicated) || (sb->state&SNonreplicated)){
+		/* fprint(2, "%P ignored\n", s->p); */
 		/*
 		 * One or both replicas don't care about this file right now.
 		 * Record that it is incomplete w.r.t. the other.

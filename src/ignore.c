@@ -97,6 +97,7 @@ loadignore(char *path)
 	Biobuf *b;
 	Ig *ig, **l;
 
+fprint(2, "loadignore %s\n", path);
 	didload = 1;
 	if((b = Bopen(path, OREAD)) == nil)
 		sysfatal("open %s: %r", path);
@@ -306,6 +307,6 @@ static int matchfn(char *p, char *s)
 	if(s[0]=='.' && (s[1]=='\0' || (s[1]=='.' && s[2]=='\0')) && p[0]!='.')
 		return 0;
 	i = matchel(s, p, '/');
-//	fprint(2, "matchfn %s %s => %d\n", s, p, i);
+/*fprint(2, "matchfn %s %s => %d\n", s, p, i);*/
 	return i;
 }

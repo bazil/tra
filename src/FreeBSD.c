@@ -5,12 +5,6 @@
 #include <signal.h>
 #include "tra.h"
 
-ulong
-fastrand(void)
-{
-	return arc4random();
-}
-
 char*
 trapath(char *name)
 {

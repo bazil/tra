@@ -92,10 +92,6 @@ work(Syncpath *s)
 		break;
 	}
 
-	/* if state has not changed, we succeeded */
-	if(s->state == SyncAct)
-		s->state = SyncDone;
-
 	/*
 	 * if state is SyncKids, queue the kids.
 	 * if that succeeds, then either it's already
@@ -103,6 +99,10 @@ work(Syncpath *s)
 	 */
 	if(s->state == SyncKids && synckids(s) == 0)
 		return;
+
+	/* if state has not been set to SyncError, we succeeded */
+	if(s->state == SyncAct)
+		s->state = SyncDone;
 
 	syncfinish(s);
 }

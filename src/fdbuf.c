@@ -13,6 +13,7 @@ struct Fd
 	int rmax, wmax;
 	uchar rbuf[FdSize];
 	uchar wbuf[FdSize];
+	Ioproc *io;
 };
 
 Fd*
@@ -26,6 +27,7 @@ topen(int fd)
 	f->rmax = 0;
 	f->woff = 0;
 	f->wmax = FdSize;
+	f->io = ioproc();
 	return f;
 }
 
@@ -54,12 +56,21 @@ twflush(Fd *f)
 {
 	int m;
 
-	m = threadwrite(f->fd, f->wbuf, f->woff);
-	if(m == -1)
-		return -1;
-	memmove(f->wbuf, f->wbuf+m, f->woff-m);
-	f->woff -= m;
-	return m;
+	/*
+	 * this loop shouldn't be necessary - threadwrite 
+	 * already tries to write the whole thing, but maybe
+	 * we'll get a better error this way.
+	 */
+	while(f->woff > 0){
+		m = iowrite(f->io, f->fd, f->wbuf, f->woff);
+		if(m == -1){
+			fprint(2, "twflush: %r\n");
+			return -1;
+		}
+		memmove(f->wbuf, f->wbuf+m, f->woff-m);
+		f->woff -= m;
+	}
+	return 0;
 }
 
 int
@@ -110,7 +121,7 @@ tread(Fd *f, void *a, int n)
 	int m;
 
 	if(f->roff == f->rmax){
-		m = threadread(f->fd, f->rbuf, FdSize);
+		m = ioread(f->io, f->fd, f->rbuf, FdSize);
 		if(m < 0)
 			return -1;
 		f->roff = 0;

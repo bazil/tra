@@ -50,9 +50,10 @@ HFILES=tra.h
 
 LIB=libtra.a
 BIN=/usr/local/bin
+
 <$PLAN9/src/mklib
 
-SHORTLIB=sec thread bio 9
+CLEANFILES=$CLEANFILES $PROGS
 
 all:V: $PROGS
 
@@ -82,4 +83,15 @@ test:V: $O.tramkdb $O.tra $O.trasrv $O.tradump
 	SYNC=./o.tra
 	export TRASRV TRAMKDB TRADUMP TRASCAN TRATMP SYNC
 	rc ../testfn.rc ../test/*
+
+
+test.%:V: $O.tramkdb $O.tra $O.trasrv $O.tradump
+	TRASRV=./o.trasrv
+	TRAMKDB=./o.tramkdb
+	TRADUMP=./o.tradump
+	TRASCAN=./o.trascan
+	TRATMP=/tmp/tratest
+	SYNC=./o.tra
+	export TRASRV TRAMKDB TRADUMP TRASCAN TRATMP SYNC
+	rc ../testfn.rc ../test/$stem.*
 

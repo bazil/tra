@@ -267,15 +267,6 @@ strtopath(char *s)
 	return p;
 }
 
-#ifndef PLAN9
-long
-lrand(void)
-{
-	return rand()^(rand()<<16);
-}
-
-#endif
-
 void
 threadstate(char *fmt, ...)
 {

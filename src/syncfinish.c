@@ -85,8 +85,10 @@ synccleanup(Syncpath *s)
 			up->a.complete = 0;
 		if(!s->b.complete)
 			up->b.complete = 0;
+		if(s->state != SyncDone)
+			up->finishstate = s->state;
 		if(--up->npend == 0){
-			up->state = SyncDone;
+			up->state = up->finishstate;
 			syncfinish(up);
 		}
 	}

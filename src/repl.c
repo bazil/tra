@@ -1,4 +1,6 @@
 #include "tra.h"
+#undef send	/* oops */
+#undef recv
 
 static uchar rbuf[100];
 Buf*
@@ -8,18 +10,14 @@ replread(Replica *r)
 	int n, nn;
 	Buf *b, *bb;
 
-	qlock(&r->rlk);
 	if(r->err){
 	Error:
 		werrstr("%s", r->err);
-		qunlock(&r->rlk);
 		return nil;
 	}
 
 	if(tcanread(r->rfd) < 4){
-		qunlock(&r->rlk);
 		replflush(r);
-		qlock(&r->rlk);
 		if(r->err)
 			goto Error;
 	}
@@ -68,7 +66,6 @@ replread(Replica *r)
 		b = bb;
 	}
 	inrpctot += b->ep - b->p;
-	qunlock(&r->rlk);
 	return b;
 }
 
@@ -79,7 +76,6 @@ replwrite(Replica *r, Buf *b)
 	uchar hdr[8];
 	Buf *bb;
 
-	qlock(&r->wlk);
 	n = b->ep - b->p;
 	bb = nil;
 	outrpctot += n;
@@ -90,7 +86,6 @@ replwrite(Replica *r, Buf *b)
 		nn = deflateblock(r->deflate, bb->p, bb->ep-bb->p, b->p, n);
 		if(nn < 0){
 			r->err = "error compressing block";
-			qunlock(&r->wlk);
 			return -1;
 		}
 		bb->ep = bb->p+nn;
@@ -106,25 +101,20 @@ replwrite(Replica *r, Buf *b)
 		free(bb);
 fprint(2, "write error\n");
 		r->err = "write error";
-		qunlock(&r->wlk);
 		return -1;
 	}
 	free(bb);
-	qunlock(&r->wlk);
 	return 0;
 }
 
 int
 replflush(Replica *r)
 {
-dbg(DbgRpc, "replflush\n");
-	qlock(&r->wlk);
+	dbg(DbgRpc, "replflush\n");
 	if(twflush(r->wfd) < 0){
 		r->err = "write error";
-		qunlock(&r->wlk);
 		return -1;
 	}
-	qunlock(&r->wlk);
 	return 0;
 }
 
@@ -137,15 +127,68 @@ replclose(Replica *r)
 	free(r);
 }
 
+static int
+replmuxgettag(Mux *mux, void *v)
+{
+	uchar *p;
+	Buf *b;
+	
+	USED(mux);
+	b = v;
+	if(b->p+6 > b->ep)
+		return -1;
+	p = b->p+2;
+	return (p[0]<<24)|(p[1]<<16)|(p[2]<<8)|p[3];	
+}
+
+static int
+replmuxsettag(Mux *mux, void *v, uint tag)
+{
+	uchar *p;
+	Buf *b;
+	
+	USED(mux);
+	b = v;
+	if(b->p+6 > b->ep)
+		return -1;
+	p = b->p+2;
+	p[0] = (tag>>24)&0xFF;
+	p[1] = (tag>>16)&0xFF;
+	p[2] = (tag>>8)&0xFF;
+	p[3] = tag&0xFF;
+	return 0;
+}
+
+static void*
+replmuxrecv(Mux *mux)
+{
+	return replread(mux->aux);
+}
+
+static int
+replmuxsend(Mux *mux, void *v)
+{
+	return replwrite(mux->aux, v);
+}
+
 Replica*
 fd2replica(int fd0, int fd1)
 {
 	Replica *repl;
 
 	repl = emalloc(sizeof(Replica));
-	repl->tagrend.l = &repl->lk;
 	repl->rfd = topen(fd0);
 	repl->wfd = topen(fd1);
+	
+	muxinit(&repl->mux);
+	repl->mux.mintag = 0;
+	repl->mux.maxtag = 255;
+	repl->mux.send = replmuxsend;
+	repl->mux.recv = replmuxrecv;
+	repl->mux.gettag = replmuxgettag;
+	repl->mux.settag = replmuxsettag;
+	repl->mux.aux = repl;
+
 	return repl;
 }
 
@@ -163,3 +206,4 @@ dialreplica(char *name)
 		sysfatal("%s sysname: %r", name);
 	return r;
 }
+
