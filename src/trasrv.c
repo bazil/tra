@@ -295,6 +295,7 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 		s->mtime = copynow(srv->now, s->sysmtime);
 //fprint(2, "%P: now %$\n", p, s);
 		dbputstat(srv->db, ap->e, ap->n, s);
+dbg(DbgCache, "dbputstat done in statupdate\n");
 	}
 /*
 	s->synctime = maxvtime(s->synctime, srv->now);
@@ -305,7 +306,9 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 	if(s->state == SDir){
 //fprint(2, "syskids dir %s\n", tpath);
 		nks = syskids(tpath, &ks, ss);
+dbg(DbgCache, "x 1 in statupdate\n");
 		qsort(ks, nks, sizeof(ks[0]), syskidscmp);
+dbg(DbgCache, "x 2 in statupdate\n");
 		for(i=0; i<nks; i++){
 			if(i) assert(strcmp(ks[i-1]->name, ks[i]->name) < 0);
 			kp = mkpath(p, ks[i]->name);
@@ -313,6 +316,7 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 			freepath(kp);
 		}
 	}
+dbg(DbgCache, "x done in statupdate\n");
 
 	k = nil;
 	nk = dbgetkids(srv->db, ap->e, ap->n, &k);
@@ -330,6 +334,7 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 	}
 	freesysstatlist(ks, nks);
 	freekids(k, nk);
+dbg(DbgCache, "y done in statupdate\n");
 
 	if(m)
 		maxvtime(m, s->mtime);
@@ -338,6 +343,7 @@ statupdate(Srv *srv, Path *p, Stat *os, Vtime *m, Sysstat *ss)
 		freestat(s);
 	free(ap);
 	free(tpath);
+dbg(DbgCache, "z done in statupdate\n");
 	return 1;
 }
 
@@ -935,6 +941,7 @@ threadmain(int argc, char **argv)
 	if(banner(srv->r, nil) < 0)
 		sysfatal("banner: %r");
 
+//fprint(2, "%s: banner finished\n", argv0);
 	inflate = nil;
 	deflate = nil;
 	while((b = replread(srv->r)) != nil){

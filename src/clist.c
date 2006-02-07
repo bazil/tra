@@ -71,13 +71,14 @@ cmapinsert(DMap *m, Datum *k, Datum *v, int flag)
 	CMap *c;
 	Entry ek, *e, *ep;
 
-	dbg(DbgCache, "cinsert %.*s %.*H\n", (int)utfnlen((char*)k->a, k->n), (char*)k->a, v->n, v->a);
+	dbg(DbgCache, "cinsert %.8lux %.*s %.*H\n", getcallerpc(&m), (int)utfnlen((char*)k->a, k->n), (char*)k->a, v->n, v->a);
 
 cmapinserts++;
 	c = map2clist(m);
 	ek.k = *k;
 	if((a = lookupavl(c->tree, e2a(&ek))) != nil){
 		if(!(flag&DMapReplace)){
+dbg(DbgCache, "cinsert done\n");
 			werrstr("key already exists");
 			return -1;
 		}
@@ -87,9 +88,11 @@ cmapinserts++;
 		e->v.a = emallocnz(v->n);
 		e->v.n = v->n;
 		memmove(e->v.a, v->a, v->n);
+dbg(DbgCache, "cinsert done\n");
 		return 0;
 	}else{
 		if(!(flag&DMapCreate)){
+dbg(DbgCache, "cinsert done\n");
 			werrstr("key not found");
 			return -1;
 		}
@@ -105,6 +108,7 @@ cmapinserts++;
 		insertavl(c->tree, e2a(e), (Avl**)(void*)&ep);
 		if(ep != nil)
 			panic("cmapinsert");
+dbg(DbgCache, "cinsert done\n");
 		return 0;
 	}	
 }

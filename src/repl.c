@@ -16,11 +16,9 @@ replread(Replica *r)
 		return nil;
 	}
 
-	if(tcanread(r->rfd) < 4){
+//fprint(2, "treadn %d\n", 4);
+	if(!tcanread(r->rfd))
 		replflush(r);
-		if(r->err)
-			goto Error;
-	}
 
 	if(treadn(r->rfd, hdr, 4) != 4){
 		r->err = "eof reading input";
@@ -37,8 +35,9 @@ replread(Replica *r)
 		memmove(rbuf, hdr, 4);
 		n = tread(r->rfd, rbuf+4, sizeof rbuf-5);
 		rbuf[n] = 0;
-		fprint(2, "IMPLAUSIBLE %s\n", rbuf); 
+		fprint(2, "%s: IMPLAUSIBLE %s\n", argv0, rbuf); 
 		r->err = "implausible rpc packet";
+sysfatal("bad rpc"); //XXX
 		goto Error;
 	}
 
@@ -100,6 +99,7 @@ replwrite(Replica *r, Buf *b)
 	|| twrite(r->wfd, b->p, n) != n){
 		free(bb);
 fprint(2, "write error\n");
+sysfatal("write error");	// XXX
 		r->err = "write error";
 		return -1;
 	}
@@ -110,11 +110,16 @@ fprint(2, "write error\n");
 int
 replflush(Replica *r)
 {
+	qlock(&r->wlock);
+//Xfprint(2, "%s: replflush %p start\n", argv0, r);
 	dbg(DbgRpc, "replflush\n");
 	if(twflush(r->wfd) < 0){
 		r->err = "write error";
+		qunlock(&r->wlock);
 		return -1;
 	}
+//Xfprint(2, "%s: replflush %p end\n", argv0, r);
+	qunlock(&r->wlock);
 	return 0;
 }
 
@@ -162,13 +167,27 @@ replmuxsettag(Mux *mux, void *v, uint tag)
 static void*
 replmuxrecv(Mux *mux)
 {
-	return replread(mux->aux);
+	void *v;
+	Replica *r;
+
+	r = mux->aux;
+	qlock(&r->rlock);
+	v = replread(r);
+	qunlock(&r->rlock);
+	return v;
 }
 
 static int
 replmuxsend(Mux *mux, void *v)
 {
-	return replwrite(mux->aux, v);
+	int x;
+	Replica *r;
+
+	r = mux->aux;
+	qlock(&r->wlock);
+	x = replwrite(r, v);
+	qunlock(&r->wlock);
+	return x;
 }
 
 Replica*
@@ -177,8 +196,8 @@ fd2replica(int fd0, int fd1)
 	Replica *repl;
 
 	repl = emalloc(sizeof(Replica));
-	repl->rfd = topen(fd0);
-	repl->wfd = topen(fd1);
+	repl->rfd = topen(fd0, OREAD);
+	repl->wfd = topen(fd1, OWRITE);
 	
 	muxinit(&repl->mux);
 	repl->mux.mintag = 0;

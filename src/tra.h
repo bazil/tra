@@ -29,8 +29,8 @@ typedef	intptr_t intptr;
 enum
 {
 	STACK = 32768,
-	SyncThreads = 32,
-	WorkThreads = 32,
+	SyncThreads = 512,
+	WorkThreads = 512,
 };
 
 
@@ -224,6 +224,8 @@ struct Replica
 	Flate *deflate;
 	char *err;
 	Mux mux;
+	QLock rlock;
+	QLock wlock;
 };
 
 enum
@@ -324,6 +326,8 @@ enum	/* ON-DISK: DON'T CHANGE */
 	SNonreplicated = 1<<7		/* not interested in this file*/
 };
 
+#undef DMSETGID
+#undef DMSETUID
 /* Stat.mode */
 #define DMRWXBITS	000000000777	/* read, write, execute: Plan 9, Unix*/
 #define DMSTICKY	000000001000	/* Unix */
@@ -616,7 +620,7 @@ void		sysstatnotedelete(Stat*);
 int		syswrite(Fid*, void*, int);
 int		syswstat(char*, Stat*, Stat*);
 void		tclose(Fd*);
-Fd*		topen(int);
+Fd*		topen(int, int);
 void		tramkdb(char*, char*, int, int);
 int		tramkwriteable(Fid*, char*);
 char*		trapath(char*);
@@ -656,6 +660,7 @@ void		PVLONG(uchar*, vlong);
 extern int	inrpctot, outrpctot;
 extern int	inzrpctot, outzrpctot;
 extern int nop;
+extern int superquiet;
 
 #undef exits
 #define exits(string, number) threadexitsall(string)

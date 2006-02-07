@@ -496,6 +496,7 @@ writedbwalk(Db *db, Dbwalk *w, char **e, int n)
 			panic("dmapinsert: %r");
 		free(v.a);
 	}
+dbg(DbgCache, "writedbwalk done - %lux\n", getcallerpc(&db));
 }
 
 /*
@@ -506,13 +507,15 @@ freedbwalk(Dbwalk *w, int n)
 {
 	int i;
 
+dbg(DbgCache, "freedbwalk %d\n", n);
 	for(i=0; i<=n; i++){
 		if(i!=0 && w[i].m)
 			w[i].m->close(w[i].m);
 		freestat(w[i].s);
 		free(w[i].v.a);
 	}
-	free(w);	
+	free(w);
+dbg(DbgCache, "freedbwalk done\n");
 }
 
 /*
@@ -572,6 +575,7 @@ dbgetstat(Db *db, char **e, int ne, Stat **ps)
 		*ps = mkghoststat(w[n].s->synctime);
 
 	freedbwalk(w, n);
+dbg(DbgCache, "dbgetstat - done %d - %lux\n", ne, getcallerpc(&db));
 	return ne;
 }
 
@@ -644,7 +648,9 @@ _dbputstat(Db *db, char **e, int ne, Stat *s)
 
 	/* write everything back */
 	writedbwalk(db, w, e, ne);
+dbg(DbgCache, "Freedbwalk\n");
 	freedbwalk(w, ne);
+dbg(DbgCache, "_dbputstat - ret %lux\n", getcallerpc(&db));
 	return 0;
 }
 
@@ -859,7 +865,9 @@ dbputstat(Db *db, char **e, int ne, Stat *s)
 {
 	if(_dbputstat(db, e, ne, s) < 0)
 		return -1;
+dbg(DbgCache, "dbputstat logit\n");
 	logit(db, putstatbuf(e, ne, s));
+dbg(DbgCache, "dbputstat logit done - %lux\n", getcallerpc(&db));
 	return 0;
 }
 
@@ -1040,6 +1048,7 @@ fprint(2, "log putstat %P %$\n", p, s);
 freepath(p);
 }
 				_dbputstat(db, e, ne, s);
+dbg(DbgCache, "done dbputstat\n");
 				freestat(s);
 				changes = 1;
 				break;

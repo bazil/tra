@@ -77,10 +77,15 @@ banner(Replica *r, char *name)
 	char buf[257];
 
 	dbg(DbgRpc, "sending tracmd\n");
+	qlock(&r->rlock);
+	qlock(&r->wlock);
 	/* both sides send tracmd */
 	if(twrite(r->wfd, tracmd, sizeof tracmd-1) < 0
 	|| twflush(r->wfd) == -1){
 		werrstr("writing banner: %r");
+	err:
+		qunlock(&r->wlock);
+		qunlock(&r->rlock);
 		return -1;
 	}
 	dbg(DbgRpc, "waiting for tracmd\n");
@@ -92,7 +97,7 @@ banner(Replica *r, char *name)
 	}
 	if(p == nil){
 		werrstr("did not receive initial banner");
-		return -1;
+		goto err;
 	}
 
 	dbg(DbgRpc, "sending antissh\n");
@@ -100,12 +105,12 @@ banner(Replica *r, char *name)
 	if(twrite(r->wfd, antissh, sizeof antissh-1) < 0
 	|| twflush(r->wfd) == -1){
 		werrstr("writing antissh: %r");
-		return -1;
+		goto err;
 	}
 	dbg(DbgRpc, "waiting for antissh\n");
 	if(readln(r->rfd, "\n")<0 || readln(r->rfd, "~?\n")<0 || readln(r->rfd, "~.\n") < 0){
 		werrstr("corrupt anti-ssh banner");
-		return -1;
+		goto err;
 	}
 
 	dbg(DbgRpc, "sending byte map\n");
@@ -115,7 +120,7 @@ banner(Replica *r, char *name)
 		buf[i] = i;
 	if(twrite(r->wfd, buf, sizeof buf) < 0 || twflush(r->wfd) == -1){
 		werrstr("short channel test write: %r");
-		return -1;
+		goto err;
 	}
 	
 	dbg(DbgRpc, "receiving byte map\n");
@@ -123,13 +128,16 @@ banner(Replica *r, char *name)
 	for(i=0; i < sizeof buf; i++){
 		if(tread(r->rfd, &c, 1) != 1){
 			werrstr("8-bit test: expected 0x%x, got eof", buf[i]);
-			return -1;
+			goto err;
 		}
 		if(c != buf[i]){
 			werrstr("8-bit test: expected 0x%x, got 0x%x", buf[i], c);
-			return -1;
+			goto err;
 		}
 	}
+//fprint(2, "%s: pass\n", argv0);
+	qunlock(&r->wlock);
+	qunlock(&r->rlock);
 	return 0;
 }
 
