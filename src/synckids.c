@@ -101,6 +101,17 @@ kidnamecmp(const void *a, const void *b)
 	return strcmp(ka->name, kb->name);
 }
 
+Stat*
+mkemptystate(Vtime *synctime)
+{
+	Stat *s;
+	
+	s = mkstat();
+	s->state = SNonexistent;
+	s->synctime = copyvtime(synctime);
+	return s;
+}
+
 int
 synckids(Syncpath *s)
 {
@@ -155,8 +166,13 @@ synckids(Syncpath *s)
 	mergekids(s, ak->k, ak->nk, bk->k, bk->nk, n);
 	s->npend = s->nkid;
 	s->finishstate = SyncDone;
-	for(i=0; i<n; i++)
+	for(i=0; i<n; i++){
+		if(s->kid[i].a.s == nil)
+			s->kid[i].a.s = mkemptystate(s->a.s->synctime);
+		if(s->kid[i].b.s == nil)
+			s->kid[i].b.s = mkemptystate(s->b.s->synctime);
 		qsend(s->sync->syncq, &s->kid[i]);
+	}
 
 End:
 	if(ak->err)

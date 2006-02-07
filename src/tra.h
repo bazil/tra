@@ -29,8 +29,8 @@ typedef	intptr_t intptr;
 enum
 {
 	STACK = 32768,
-	SyncThreads = 512,
-	WorkThreads = 512,
+	SyncThreads = 100,
+	WorkThreads = 100,
 };
 
 
