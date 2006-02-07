@@ -1,52 +1,26 @@
+/*
+ * Unthreaded fdbufs.
+ */
+#define NOTHREAD
 #include "tra.h"
-#include <thread.h>
 
 enum
 {
-	FdSize = 8*1024,
+	FdSize = 128*1024,
 };
 
 struct Fd
 {
 	QLock lk;
-	Rendez r;
 	int fd;
 	int nw;
 	int mode;
 	uchar *p;
 	uchar *ep;
 	uchar buf[FdSize];
-	Ioproc *io;
 };
 
 int _twflush(Fd*);
-
-void
-twritethread(void *v)
-{
-	int n;
-	Fd *f;
-	
-	f = v;
-	qlock(&f->lk);
-	for(;;){
-		n = 0;
-		while(f->p == f->buf)
-			rsleep(&f->r);
-		qunlock(&f->lk);
-		n = threadidle();
-		n = threadidle();
-		n = threadidle();
-		n = threadidle();
-		n = threadidle();
-		n = threadidle();
-		n = threadidle();
-		n = threadidle();
-		dbg(DbgFdbuf, "_twflush fd=%d from twritethread n=%d\n", f->fd, n);
-		qlock(&f->lk);
-		_twflush(f);
-	}
-}
 
 Fd*
 topen(int fd, int mode)
@@ -57,14 +31,10 @@ topen(int fd, int mode)
 	f->fd = fd;
 	f->p = f->buf;
 	f->mode = mode;
-	f->io = ioproc();
-	f->r.l = &f->lk;
 	if(mode == OREAD)
 		f->ep = f->p;
-	else{
-		spawn(twritethread, f);
+	else
 		f->ep = f->buf+sizeof f->buf;
-	}
 	return f;
 }
 
@@ -84,9 +54,8 @@ _twflush(Fd *f)
 	while(f->p > f->buf){
 //fprint(2, "%s: twflush: %p %d\n", argv0, f, f->p-f->buf);
 //fprint(2, "%s: twflush %d %d %.*H\n", argv0, f->fd, f->p-f->buf, f->p-f->buf, f->buf);
-		m = iowrite(f->io, f->fd, f->buf, f->p-f->buf);
+		m = write(f->fd, f->buf, f->p-f->buf);
 //Xfprint(2, "%s: twflush: %p %d got %d - %d writes\n", argv0, f, f->p-f->buf, m, f->nw);
-		dbg(DbgFdbuf, "_twflush fd=%d n=%d wrote=%d\n", f->fd, f->p-f->buf, m);
 		if(m <= 0){
 			fprint(2, "%s: twflush: %r\n", argv0);
 			return -1;
@@ -115,7 +84,6 @@ _twrite(Fd *f, void *a, int n)
 	memmove(f->p, a, m);
 	f->nw++;
 //fprint(2, "%s: _twrite %p %d of %d\n", argv0, f, m, n);
-	dbg(DbgFdbuf, "_twrite fd=%d n=%d wrote=%d\n", f->fd, n, m);
 	f->p += m;
 	return m;
 }
@@ -150,9 +118,8 @@ twrite(Fd *f, void *av, int n)
 int
 twflush(Fd *f)
 {
-	dbg(DbgFdbuf, "twflush fd=%d\n", f->fd);
 	qlock(&f->lk);
-	rwakeup(&f->r);
+	_twflush(f);
 	qunlock(&f->lk);
 	return 0;
 }
@@ -162,7 +129,9 @@ tcanread(Fd *f)
 {
 	assert(f->mode == OREAD);
 
-	return f->p < f->ep;
+	if(f->p < f->ep)
+		return 1;
+	return 0;
 }
 
 int
@@ -177,10 +146,8 @@ _tread(Fd *f, void *a, int n)
 		f->p = f->buf;
 		f->ep = f->buf;
 //fprint(2, "%s: ioread %p %d\n", argv0, f, FdSize);
-		dbg(DbgFdbuf, "_treading fd=%d n=%d\n", f->fd, n);
-		m = ioread(f->io, f->fd, f->ep, FdSize);
+		m = read(f->fd, f->ep, FdSize);
 //Xfprint(2, "%s: ioread %p got %d\n", argv0, f, m);
-		dbg(DbgFdbuf, "_tread fd=%d n=%d m=%d\n", f->fd, n, m);
 		if(m <= 0)
 			return m;
 		f->ep += m;
@@ -200,7 +167,6 @@ tread(Fd *f, void *v, int n)
 	int r;
 	
 	qlock(&f->lk);
-	dbg(DbgFdbuf, "tread fd=%d n=%d\n", f->fd, n);
 	r = _tread(f, v, n);
 	qunlock(&f->lk);
 	return r;

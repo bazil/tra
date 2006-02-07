@@ -803,6 +803,7 @@ logit(Db *db, Buf *b)
 {
 	int n;
 
+return;
 /*
 	if(db->ignwr){
 		free(b);

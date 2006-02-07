@@ -4,11 +4,11 @@ void
 usage(void)
 {
 	fprint(2, "usage: tradump dbfile\n");
-	exits("usage", 1);
+	exits("usage");
 }
 
 void
-threadmain(int argc, char **argv)
+main(int argc, char **argv)
 {
 	Db *db;
 
@@ -32,7 +32,7 @@ threadmain(int argc, char **argv)
 		sysfatal("opendb '%s': %r", argv[0]);
 
 	dumpdb(db, 1);
-	exits(nil, 0);
+	exits(nil);
 }
 
 int

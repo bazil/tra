@@ -9,7 +9,10 @@ clientrpc(Replica *repl, Rpc *r)
 	b = convR2M(r);
 	if(b == nil)
 		abort();
-	dbg(DbgRpc, "-> %p %R\n", repl, r);
+	/* printed by replmuxsettag */
+	/* dbg(DbgRpc, "-> %s %R\n", repl->sysname, r); */
+	b->aux = r;
+	r->repl = repl;
 	threadstate("clientrpc %R", r);
 	bb = muxrpc(&repl->mux, b);
 	threadstate("");
@@ -20,7 +23,7 @@ clientrpc(Replica *repl, Rpc *r)
 		free(bb);
 		return -1;
 	}
-	dbg(DbgRpc, "<- %p %R\n", repl, &nr);
+	dbg(DbgRpc, "<- %s %R\n", repl->name, &nr);
 	if(nr.type == Rerror){
 		werrstr("%s", nr.err);
 		free(bb);

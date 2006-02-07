@@ -1,4 +1,5 @@
 #include "tra.h"
+#include <thread.h>
 
 /*
  * It's important to run the stats in parallel, because the

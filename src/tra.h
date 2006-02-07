@@ -4,7 +4,6 @@
 #include <bio.h>
 #include <libsec.h>
 #include <mux.h>
-#include <thread.h>
 #include "storage.h"
 #include "libzlib/trazlib.h"
 
@@ -86,6 +85,7 @@ enum
 	DbgGhost = 1<<5,
 	DbgDb = 1<<6,
 	DbgCache = 1<<7,
+	DbgFdbuf = 1<<8,
 	DbgError = 0
 };
 
@@ -109,6 +109,7 @@ struct Buf
 	uchar *p;
 	uchar *ep;
 	jmp_buf jmp;
+	void *aux;
 };
 
 /*
@@ -275,6 +276,7 @@ enum
 };
 struct Rpc
 {
+	Replica *repl;	/* not on wire */
 	int type;
 	int tag;
 	Path *p;
@@ -558,6 +560,7 @@ char*		readbufstringdup(Buf*);
 uvlong		readbufvl(Buf*);
 Vtime*		readbufvtime(Buf*);
 void		replclose(Replica*);
+void		replmuxinit(Replica*);
 Buf*		replread(Replica*);
 int		replwrite(Replica*, Buf*);
 int		replflush(Replica*);
@@ -662,6 +665,8 @@ extern int	inzrpctot, outzrpctot;
 extern int nop;
 extern int superquiet;
 
+#ifdef exits
 #undef exits
 #define exits(string, number) threadexitsall(string)
+#endif
 #define	chan(x)	chancreate(sizeof(*(x*)0), 0)

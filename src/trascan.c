@@ -1,4 +1,5 @@
 #include "tra.h"
+#include <thread.h>
 
 Replica *repl;
 
@@ -6,7 +7,7 @@ void
 usage(void)
 {
 	fprint(2, "usage: trascan replica [path...]\n");
-	exits("usage", 1);
+	threadexitsall("usage");
 }
 
 void
@@ -57,6 +58,6 @@ threadmain(int argc, char **argv)
 	fprint(2, "close...");
 	replclose(repl);
 	fprint(2, "exit\n");
-	exits(nil, 0);
+	threadexitsall(nil);
 }
 

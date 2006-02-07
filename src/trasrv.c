@@ -834,7 +834,7 @@ void
 usage(void)
 {
 	fprint(2, "usage: trasrv [-i inc/exc] [-o opt] ... -a | dbfile root\n");
-	exits("usage", 1);
+	exits("usage");
 }
 
 void
@@ -871,7 +871,7 @@ config(char *s)
 }
 
 void
-threadmain(int argc, char **argv)
+main(int argc, char **argv)
 {
 	char *dbfile, *iefile, err[ERRMAX], *root;
 	Buf *b;
@@ -932,7 +932,7 @@ threadmain(int argc, char **argv)
 	nonotes();
 
 	srv = opensrv(dbfile);
-	fprint(2, "# %V\n", srv->now);
+	// fprint(2, "# %V\n", srv->now);
 	srv->root = root;
 	dbgname = srv->name;
 	argv0 = dbgname;
@@ -954,6 +954,22 @@ threadmain(int argc, char **argv)
 		r.tag = t.tag;
 		r.type = t.type+1;
 		dbg(DbgRpc, "%R\n", &t);
+if(0)
+switch(t.type){
+case Taddtime:
+case Tcommit:
+case Tmkdir:
+case Tremove:
+case Twrite:
+case Twstat:
+case Twritehash:
+	goto out;
+case Topen:
+	if(t.omode=='w')
+		goto out;
+	break;
+}
+
 		switch(t.type){
 		default:
 			werrstr("unknown RPC %x", t.type);
@@ -1079,6 +1095,7 @@ threadmain(int argc, char **argv)
 			r.type = Rerror;
 			break;
 		}
+out:
 		free(b);
 		b = convR2M(&r);
 		dbg(DbgRpc, "%R (%ld bytes)\n", &r, b->ep-b->p);
@@ -1114,6 +1131,6 @@ fprint(2, "\tavl lookup %d lookupcmp %d insertcmp %d deletecmp %d\n",
 fprint(2, "\tcmaplookup %d cmapinsert %d dbwalks %d dbwalklooks %d\n", cmaplookups, cmapinserts, dbwalks, dbwalklooks);
 fprint(2, "\tstrtoids %d idtostrs %d\n", strtoids, idtostrs);
 }
-	exits(nil, 0);
+	exits(nil);
 }
 

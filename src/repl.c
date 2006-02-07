@@ -132,64 +132,6 @@ replclose(Replica *r)
 	free(r);
 }
 
-static int
-replmuxgettag(Mux *mux, void *v)
-{
-	uchar *p;
-	Buf *b;
-	
-	USED(mux);
-	b = v;
-	if(b->p+6 > b->ep)
-		return -1;
-	p = b->p+2;
-	return (p[0]<<24)|(p[1]<<16)|(p[2]<<8)|p[3];	
-}
-
-static int
-replmuxsettag(Mux *mux, void *v, uint tag)
-{
-	uchar *p;
-	Buf *b;
-	
-	USED(mux);
-	b = v;
-	if(b->p+6 > b->ep)
-		return -1;
-	p = b->p+2;
-	p[0] = (tag>>24)&0xFF;
-	p[1] = (tag>>16)&0xFF;
-	p[2] = (tag>>8)&0xFF;
-	p[3] = tag&0xFF;
-	return 0;
-}
-
-static void*
-replmuxrecv(Mux *mux)
-{
-	void *v;
-	Replica *r;
-
-	r = mux->aux;
-	qlock(&r->rlock);
-	v = replread(r);
-	qunlock(&r->rlock);
-	return v;
-}
-
-static int
-replmuxsend(Mux *mux, void *v)
-{
-	int x;
-	Replica *r;
-
-	r = mux->aux;
-	qlock(&r->wlock);
-	x = replwrite(r, v);
-	qunlock(&r->wlock);
-	return x;
-}
-
 Replica*
 fd2replica(int fd0, int fd1)
 {
@@ -198,31 +140,6 @@ fd2replica(int fd0, int fd1)
 	repl = emalloc(sizeof(Replica));
 	repl->rfd = topen(fd0, OREAD);
 	repl->wfd = topen(fd1, OWRITE);
-	
-	muxinit(&repl->mux);
-	repl->mux.mintag = 0;
-	repl->mux.maxtag = 255;
-	repl->mux.send = replmuxsend;
-	repl->mux.recv = replmuxrecv;
-	repl->mux.gettag = replmuxgettag;
-	repl->mux.settag = replmuxsettag;
-	repl->mux.aux = repl;
 
 	return repl;
 }
-
-/* BUG: the sysfatals here and in _dialreplica are antisocial */
-Replica*
-dialreplica(char *name)
-{
-	Replica *r;
-
-	r = _dialreplica(name);
-	if(banner(r, name) < 0)
-		sysfatal("%s banner: %r", name);
-	r->name = estrdup(name);
-	if((r->sysname = rpcmeta(r, "sysname")) == nil)
-		sysfatal("%s sysname: %r", name);
-	return r;
-}
-

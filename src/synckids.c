@@ -1,4 +1,5 @@
 #include "tra.h"
+#include <thread.h>
 
 typedef struct Kids Kids;
 struct Kids

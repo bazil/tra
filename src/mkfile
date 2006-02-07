@@ -22,30 +22,35 @@ OFILES=\
 	clnt.$O\
 	dat.$O\
 	db.$O\
-	fdbuf.$O\
 	hash.$O\
 	ignore.$O\
 	list.$O\
-	mux.$O\
 	noconfig.$O\
 	path.$O\
 	qsort.$O\
-	queue.$O\
 	repl.$O\
 	rpc.$O\
 	srv.$O\
 	stat.$O\
 	storage.$O\
 	strcache.$O\
+	time.$O\
+	unix.$O\
+	util.$O\
+	work.$O\
+
+THREADOFILES=\
+	$SYSNAME-thread.$O\
+	crepl.$O\
+	fdbuf.$O\
+	mux.$O\
+	queue.$O\
+	spawn.$O\
 	synckids.$O\
 	syncfinish.$O\
 	syncthread.$O\
 	synctriage.$O\
 	syncstat.$O\
-	time.$O\
-	unix.$O\
-	util.$O\
-	work.$O\
 
 HFILES=tra.h
 
@@ -67,8 +72,16 @@ install:V: $PROGS
 f5:V: install
 	scp /usr/local/bin/tra* root@f5:/usr/local/bin
 
+a1:V: install
+	scp /usr/local/bin/tra* a1:/usr/local/bin
+
 nuke:V: nuke-common 
 	(cd libzlib ; mk nuke)
+
+$O.trasrv: ufdbuf.$O 
+$O.trascan: $SYSNAME-thread.$O crepl.$O fdbuf.$O mux.$O spawn.$O
+$O.tra: $THREADOFILES
+$O.trafixdb: ufdbuf.$O
 
 $O.%: %.$O $LIB libzlib/libzlib.a
 	$LD $LDFLAGS -o $target $prereq

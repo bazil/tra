@@ -4,7 +4,7 @@ void
 usage(void)
 {
 	fprint(2, "usage: tramkdb [-R] [-b blocksize] dbfile sysname\n");
-	exits("usage", 1);
+	exits("usage");
 }
 
 extern int __flagfmt(Fmt*);
@@ -39,7 +39,7 @@ threadmain(int argc, char **argv)
 	sysname = argv[1];
 
 	tramkdb(name, sysname, blocksize, !norandom);
-	exits(nil, 0);
+	exits(nil);
 }
 
 int

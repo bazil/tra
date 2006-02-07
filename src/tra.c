@@ -3,6 +3,9 @@
  */
 
 #include "tra.h"
+#include <thread.h>
+#undef exits
+#define exits(string, number) threadexitsall(string)
 
 int printstats;
 int res;

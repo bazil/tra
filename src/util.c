@@ -7,7 +7,7 @@ void
 traversion(void)
 {
 	print("Tra Working Version OSDI04\n");
-	exits(nil, 0);
+	sysfatal("version");
 }
 
 void*
@@ -108,7 +108,7 @@ dbg(int level, char *f, ...)
 
 	fmtfdinit(&fmt, 2, buf, sizeof buf);
 	va_start(arg, f);
-	fmtprint(&fmt, "%.6f %s: ", (nsec()-t0)/1.e6, dbgname ? dbgname : argv0);
+	fmtprint(&fmt, "%.6f %s: ", (nsec()-t0)/1.e9, dbgname ? dbgname : argv0);
 	fmtvprint(&fmt, f, arg);
 	va_end(arg);
 	fmtfdflush(&fmt);
@@ -190,6 +190,7 @@ static struct
 	{ "ghost",	DbgGhost, },
 	{ "db",	DbgDb, },
 	{ "cache",	DbgCache, },
+	{ "fdbuf",	DbgFdbuf, },
 	{ "all",	~0, }
 };
 
@@ -245,12 +246,6 @@ PVLONG(uchar *p, vlong v)
 		p[i] = v;
 		v >>= 8;
 	}
-}
-
-void
-spawn(void (*fn)(void*), void *arg)
-{
-	threadcreate(fn, arg, STACK);
 }
 
 Path*

@@ -1,4 +1,5 @@
 #include "tra.h"
+#include <thread.h>
 
 void
 syncthread0(void *a)

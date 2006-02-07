@@ -644,11 +644,11 @@ void
 usage(void)
 {
 	fprint(2, "usage: trafixdb [-c new.tradb] [-nv] dbfile\n");
-	exits("usage", 1);
+	exits("usage");
 }
 
 void
-threadmain(int argc, char **argv)
+main(int argc, char **argv)
 {
 	initfmt();
 
@@ -658,7 +658,7 @@ threadmain(int argc, char **argv)
 	case 'l':
 		print("known inconsistencies that trafixdb fixes:\n");
 		write(1, knownproblems, strlen(knownproblems));
-		exits(nil, 0);
+		exits(nil);
 	case 'n':
 		nflag = 1;
 		break;
@@ -693,5 +693,5 @@ threadmain(int argc, char **argv)
 	closedb(db);
 	if(db != wdb)
 		closedb(wdb);
-	exits(nil, 0);
+	exits(nil);
 }
